@@ -1,0 +1,214 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SuperSocket.Primitives</name>
+    </assembly>
+    <members>
+        <member name="T:SuperSocket.AsyncParallel">
+            <summary>
+            Provides utility methods for executing asynchronous operations in parallel.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.AsyncParallel.ForEach``1(System.Collections.Generic.IEnumerable{``0},System.Func{``0,System.Threading.Tasks.Task},System.Int32)">
+            <summary>
+            Executes the specified asynchronous operation for each item in the source collection in parallel.
+            </summary>
+            <typeparam name="TItem">The type of the items in the source collection.</typeparam>
+            <param name="source">The source collection of items.</param>
+            <param name="operation">The asynchronous operation to execute for each item.</param>
+            <param name="maxDegreeOfParallelism">The maximum number of operations to execute in parallel. Default is 5.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.AsyncParallel.ForEach``1(System.Collections.Generic.IEnumerable{``0},System.Func{``0,System.Threading.Tasks.Task},System.Threading.Tasks.ParallelOptions)">
+            <summary>
+            Executes the specified asynchronous operation for each item in the source collection in parallel with the specified parallel options.
+            </summary>
+            <typeparam name="TItem">The type of the items in the source collection.</typeparam>
+            <param name="source">The source collection of items.</param>
+            <param name="operation">The asynchronous operation to execute for each item.</param>
+            <param name="parallelOptions">The options for controlling the parallel execution.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="T:SuperSocket.CancellationTokenSourcePool">
+            <summary>
+            Provides a pool for reusing <see cref="T:System.Threading.CancellationTokenSource"/> instances to reduce memory allocations.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.CancellationTokenSourcePool.Shared">
+            <summary>
+            Gets a shared instance of the <see cref="T:SuperSocket.CancellationTokenSourcePool"/>.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.CancellationTokenSourcePool.Rent">
+            <summary>
+            Rents a <see cref="T:SuperSocket.CancellationTokenSourcePool.PooledCancellationTokenSource"/> from the pool.
+            </summary>
+            <returns>A pooled <see cref="T:SuperSocket.CancellationTokenSourcePool.PooledCancellationTokenSource"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.CancellationTokenSourcePool.Rent(System.TimeSpan)">
+            <summary>
+            Rents a <see cref="T:SuperSocket.CancellationTokenSourcePool.PooledCancellationTokenSource"/> from the pool and sets a cancellation delay.
+            </summary>
+            <param name="delay">The delay after which the token will be canceled.</param>
+            <returns>A pooled <see cref="T:SuperSocket.CancellationTokenSourcePool.PooledCancellationTokenSource"/>.</returns>
+        </member>
+        <member name="T:SuperSocket.CancellationTokenSourcePool.PooledCancellationTokenSource">
+            <summary>
+            Represents a <see cref="T:System.Threading.CancellationTokenSource"/> with a back pointer to the pool it came from.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.CancellationTokenSourcePool.PooledCancellationTokenSource.#ctor(SuperSocket.CancellationTokenSourcePool)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.CancellationTokenSourcePool.PooledCancellationTokenSource"/> class with the specified pool.
+            </summary>
+            <param name="pool">The pool to which this instance belongs.</param>
+        </member>
+        <member name="M:SuperSocket.CancellationTokenSourcePool.PooledCancellationTokenSource.Dispose(System.Boolean)">
+            <summary>
+            Disposes the <see cref="T:SuperSocket.CancellationTokenSourcePool.PooledCancellationTokenSource"/> and returns it to the pool if possible.
+            </summary>
+            <param name="disposing">A value indicating whether the object is being disposed.</param>
+        </member>
+        <member name="T:SuperSocket.Server.Abstractions.CertificateOptions">
+            <summary>
+            Represents configuration options for loading an X.509 certificate.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Abstractions.CertificateOptions.FilePath">
+            <summary>
+            Gets or sets the certificate file path (pfx).
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Abstractions.CertificateOptions.Password">
+            <summary>
+            Gets or sets the password for the certificate file.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Abstractions.CertificateOptions.StoreName">
+            <summary>
+            Gets or sets the name of the store where the certificate is located.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Abstractions.CertificateOptions.Thumbprint">
+            <summary>
+            Gets or sets the thumbprint of the certificate.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Abstractions.CertificateOptions.StoreLocation">
+            <summary>
+            Gets or sets the store location of the certificate.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Abstractions.CertificateOptions.KeyStorageFlags">
+            <summary>
+            Gets or sets the key storage flags used to instantiate the X509Certificate2 object.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Abstractions.CertificateOptions.GetCertificate">
+            <summary>
+            Retrieves the X.509 certificate based on the specified options.
+            </summary>
+            <returns>The loaded <see cref="T:System.Security.Cryptography.X509Certificates.X509Certificate"/>.</returns>
+            <exception cref="T:System.Exception">Thrown if neither <see cref="P:SuperSocket.Server.Abstractions.CertificateOptions.FilePath"/> nor <see cref="P:SuperSocket.Server.Abstractions.CertificateOptions.Thumbprint"/> is provided.</exception>
+        </member>
+        <member name="T:SuperSocket.DefaultStringEncoder">
+            <summary>
+            Encodes strings into byte sequences using a specified encoding.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.DefaultStringEncoder.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.DefaultStringEncoder"/> class with UTF-8 encoding.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.DefaultStringEncoder.#ctor(System.Text.Encoding)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.DefaultStringEncoder"/> class with the specified encoding.
+            </summary>
+            <param name="encoding">The encoding to use for string encoding.</param>
+        </member>
+        <member name="M:SuperSocket.DefaultStringEncoder.Encode(System.Buffers.IBufferWriter{System.Byte},System.String)">
+            <summary>
+            Encodes the specified string into a byte sequence and writes it to the buffer writer.
+            </summary>
+            <param name="writer">The buffer writer to write the encoded bytes to.</param>
+            <param name="pack">The string to encode.</param>
+            <returns>The number of bytes written to the buffer writer.</returns>
+        </member>
+        <member name="T:SuperSocket.DefaultStringPackageDecoder">
+            <summary>
+            Decodes byte sequences into <see cref="T:SuperSocket.ProtoBase.StringPackageInfo"/> objects using a specified encoding.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.DefaultStringPackageDecoder.Encoding">
+            <summary>
+            Gets the encoding used for decoding.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.DefaultStringPackageDecoder.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.DefaultStringPackageDecoder"/> class with UTF-8 encoding.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.DefaultStringPackageDecoder.#ctor(System.Text.Encoding)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.DefaultStringPackageDecoder"/> class with the specified encoding.
+            </summary>
+            <param name="encoding">The encoding to use for decoding.</param>
+        </member>
+        <member name="M:SuperSocket.DefaultStringPackageDecoder.Decode(System.Buffers.ReadOnlySequence{System.Byte}@,System.Object)">
+            <summary>
+            Decodes the specified byte sequence into a <see cref="T:SuperSocket.ProtoBase.StringPackageInfo"/> object.
+            </summary>
+            <param name="buffer">The byte sequence to decode.</param>
+            <param name="context">The context for decoding (optional).</param>
+            <returns>The decoded <see cref="T:SuperSocket.ProtoBase.StringPackageInfo"/> object.</returns>
+        </member>
+        <member name="T:SuperSocket.Extensions">
+            <summary>
+            Provides utility extension methods for handling tasks.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Extensions.DoNotAwait(System.Threading.Tasks.Task)">
+            <summary>
+            Ignores the result of the specified task.
+            </summary>
+            <param name="task">The task to ignore.</param>
+        </member>
+        <member name="M:SuperSocket.Extensions.DoNotAwait(System.Threading.Tasks.ValueTask)">
+            <summary>
+            Ignores the result of the specified value task.
+            </summary>
+            <param name="task">The value task to ignore.</param>
+        </member>
+        <member name="T:SuperSocket.ILoggerAccessor">
+            <summary>
+            Provides access to an <see cref="T:Microsoft.Extensions.Logging.ILogger"/> instance.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.ILoggerAccessor.Logger">
+            <summary>
+            Gets the <see cref="T:Microsoft.Extensions.Logging.ILogger"/> instance.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.PackageHandlingException`1">
+            <summary>
+            Represents an exception that occurs during the handling of a package.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="P:SuperSocket.PackageHandlingException`1.Package">
+            <summary>
+            Gets the package that caused the exception.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.PackageHandlingException`1.#ctor(System.String,`0,System.Exception)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.PackageHandlingException`1"/> class with the specified message, package, and inner exception.
+            </summary>
+            <param name="message">The message that describes the error.</param>
+            <param name="package">The package that caused the exception.</param>
+            <param name="e">The inner exception that caused the current exception.</param>
+        </member>
+    </members>
+</doc>

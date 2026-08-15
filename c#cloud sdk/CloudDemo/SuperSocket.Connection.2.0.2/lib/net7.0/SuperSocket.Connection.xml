@@ -1,0 +1,1132 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SuperSocket.Connection</name>
+    </assembly>
+    <members>
+        <member name="T:SuperSocket.Connection.CloseReason">
+            <summary>
+            Specifies the reasons for closing a connection.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Connection.CloseReason.Unknown">
+            <summary>
+            The socket is closed for an unknown reason.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Connection.CloseReason.ServerShutdown">
+            <summary>
+            The connection is closed due to server shutdown.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Connection.CloseReason.RemoteClosing">
+            <summary>
+            The connection is closed by the remote endpoint.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Connection.CloseReason.LocalClosing">
+            <summary>
+            The connection is closed by the local endpoint.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Connection.CloseReason.ApplicationError">
+            <summary>
+            The connection is closed due to an application error.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Connection.CloseReason.SocketError">
+            <summary>
+            The connection is closed due to a socket error.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Connection.CloseReason.TimeOut">
+            <summary>
+            The connection is closed by the server due to a timeout.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Connection.CloseReason.ProtocolError">
+            <summary>
+            The connection is closed due to a protocol error.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Connection.CloseReason.InternalError">
+            <summary>
+            The connection is closed due to an internal error in SuperSocket.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Connection.CloseReason.Rejected">
+            <summary>
+            The connection is closed because it was rejected.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Connection.CloseEventArgs">
+            <summary>
+            Provides data for connection close events.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.CloseEventArgs.Reason">
+            <summary>
+            Gets the reason for the connection closure.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.CloseEventArgs.#ctor(SuperSocket.Connection.CloseReason)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.CloseEventArgs"/> class with the specified close reason.
+            </summary>
+            <param name="reason">The reason for the connection closure.</param>
+        </member>
+        <member name="T:SuperSocket.Connection.ConnectionBase">
+            <summary>
+            Provides an abstract base class for connections, defining common connection functionality.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.ConnectionBase.RunAsync``1(SuperSocket.ProtoBase.IPipelineFilter{``0})">
+            <summary>
+            Runs the connection asynchronously with the specified pipeline filter.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+            <param name="pipelineFilter">The pipeline filter to use for processing data.</param>
+            <returns>An asynchronous enumerable of package information.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.ConnectionBase.SendAsync(System.ReadOnlyMemory{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously using the specified buffer.
+            </summary>
+            <param name="buffer">The buffer containing the data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.ConnectionBase.SendAsync(System.Buffers.ReadOnlySequence{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously using the specified buffer.
+            </summary>
+            <param name="buffer">The buffer containing the data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.ConnectionBase.SendAsync``1(SuperSocket.ProtoBase.IPackageEncoder{``0},``0,System.Threading.CancellationToken)">
+            <summary>
+            Sends a package over the connection asynchronously using the specified encoder and package.
+            </summary>
+            <typeparam name="TPackage">The type of the package to send.</typeparam>
+            <param name="packageEncoder">The encoder to use for the package.</param>
+            <param name="package">The package to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.ConnectionBase.SendAsync(System.Action{System.IO.Pipelines.PipeWriter},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously using a custom write action.
+            </summary>
+            <param name="write">The action to write data to the pipe writer.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionBase.IsClosed">
+            <summary>
+            Gets a value indicating whether the connection is closed.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionBase.RemoteEndPoint">
+            <summary>
+            Gets the remote endpoint of the connection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionBase.LocalEndPoint">
+            <summary>
+            Gets the local endpoint of the connection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionBase.CloseReason">
+            <summary>
+            Gets the reason for the connection closure, if available.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionBase.LastActiveTime">
+            <summary>
+            Gets the last active time of the connection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionBase.ConnectionToken">
+            <summary>
+            Gets the cancellation token associated with the connection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionBase.ProxyInfo">
+            <summary>
+            Gets the proxy information associated with the connection.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.ConnectionBase.OnClosed">
+            <summary>
+            Handles actions to perform when the connection is closed.
+            </summary>
+        </member>
+        <member name="E:SuperSocket.Connection.ConnectionBase.Closed">
+            <summary>
+            Occurs when the connection is closed.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.ConnectionBase.CloseAsync(SuperSocket.Connection.CloseReason)">
+            <summary>
+            Closes the connection asynchronously with the specified reason.
+            </summary>
+            <param name="closeReason">The reason for closing the connection.</param>
+            <returns>A task that represents the asynchronous close operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.ConnectionBase.DetachAsync">
+            <summary>
+            Detaches the connection asynchronously.
+            </summary>
+            <returns>A task that represents the asynchronous detach operation.</returns>
+        </member>
+        <member name="T:SuperSocket.Connection.ConnectionExtensions">
+            <summary>
+            Provides extension methods for working with connections.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.ConnectionExtensions.GetRemoteCertificate(SuperSocket.Connection.IConnection)">
+            <summary>
+            Gets the remote certificate associated with the connection, if available.
+            </summary>
+            <param name="connection">The connection to retrieve the remote certificate from.</param>
+            <returns>The remote certificate, or <c>null</c> if no certificate is available.</returns>
+        </member>
+        <member name="T:SuperSocket.Connection.ConnectionOptions">
+            <summary>
+            Represents configuration options for managing connections.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionOptions.MaxPackageLength">
+            <summary>
+            Gets or sets the maximum package length in bytes. Default is 1 MB.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionOptions.ReceiveBufferSize">
+            <summary>
+            Gets or sets the size of the receive buffer in bytes. Default is 4 KB.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionOptions.SendBufferSize">
+            <summary>
+            Gets or sets the size of the send buffer in bytes. Default is 4 KB.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionOptions.ReadAsDemand">
+            <summary>
+            Gets or sets a value indicating whether data should be read only when the stream is being consumed.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionOptions.ReceiveTimeout">
+            <summary>
+            Gets or sets the receive timeout in milliseconds.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionOptions.SendTimeout">
+            <summary>
+            Gets or sets the send timeout in milliseconds.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionOptions.Logger">
+            <summary>
+            Gets or sets the logger for the connection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionOptions.Input">
+            <summary>
+            Gets or sets the input pipe for the connection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionOptions.Output">
+            <summary>
+            Gets or sets the output pipe for the connection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ConnectionOptions.Values">
+            <summary>
+            Gets or sets additional key-value pairs for connection configuration.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Connection.Extensions">
+            <summary>
+            Provides extension methods for working with connections and package streams.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.Extensions.GetPackageStream``1(SuperSocket.Connection.IConnection,SuperSocket.ProtoBase.IPipelineFilter{``0})">
+            <summary>
+            Gets an asynchronous enumerator for the package stream using the specified pipeline filter.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+            <param name="connection">The connection to retrieve the package stream from.</param>
+            <param name="pipelineFilter">The pipeline filter to use for processing data.</param>
+            <returns>An asynchronous enumerator for the package stream.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.Extensions.ReceiveAsync``1(System.Collections.Generic.IAsyncEnumerator{``0})">
+            <summary>
+            Receives the next package from the package stream asynchronously.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+            <param name="packageStream">The package stream to receive the package from.</param>
+            <returns>A task that represents the asynchronous receive operation. The result contains the next package, or <c>null</c> if the stream is completed.</returns>
+        </member>
+        <member name="T:SuperSocket.Connection.IConnectionWithRemoteCertificate">
+            <summary>
+            Represents a connection that provides access to a remote certificate.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IConnectionWithRemoteCertificate.RemoteCertificate">
+            <summary>
+            Gets the remote certificate associated with the connection.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Connection.IConnection">
+            <summary>
+            Represents a connection with methods for sending data, managing state, and handling events.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.IConnection.RunAsync``1(SuperSocket.ProtoBase.IPipelineFilter{``0})">
+            <summary>
+            Runs the connection asynchronously with the specified pipeline filter.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+            <param name="pipelineFilter">The pipeline filter to use for processing data.</param>
+            <returns>An asynchronous enumerable of package information.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.IConnection.SendAsync(System.ReadOnlyMemory{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously.
+            </summary>
+            <param name="data">The data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.IConnection.SendAsync(System.Buffers.ReadOnlySequence{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously.
+            </summary>
+            <param name="data">The data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.IConnection.SendAsync``1(SuperSocket.ProtoBase.IPackageEncoder{``0},``0,System.Threading.CancellationToken)">
+            <summary>
+            Sends a package over the connection asynchronously using the specified encoder.
+            </summary>
+            <typeparam name="TPackage">The type of the package to send.</typeparam>
+            <param name="packageEncoder">The encoder to use for the package.</param>
+            <param name="package">The package to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.IConnection.SendAsync(System.Action{System.IO.Pipelines.PipeWriter},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously using a custom write action.
+            </summary>
+            <param name="write">The action to write data to the pipe writer.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.IConnection.CloseAsync(SuperSocket.Connection.CloseReason)">
+            <summary>
+            Closes the connection asynchronously with the specified reason.
+            </summary>
+            <param name="closeReason">The reason for closing the connection.</param>
+            <returns>A task that represents the asynchronous close operation.</returns>
+        </member>
+        <member name="E:SuperSocket.Connection.IConnection.Closed">
+            <summary>
+            Occurs when the connection is closed.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IConnection.IsClosed">
+            <summary>
+            Gets a value indicating whether the connection is closed.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IConnection.RemoteEndPoint">
+            <summary>
+            Gets the remote endpoint of the connection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IConnection.LocalEndPoint">
+            <summary>
+            Gets the local endpoint of the connection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IConnection.LastActiveTime">
+            <summary>
+            Gets the last active time of the connection.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.IConnection.DetachAsync">
+            <summary>
+            Detaches the connection asynchronously.
+            </summary>
+            <returns>A task that represents the asynchronous detach operation.</returns>
+        </member>
+        <member name="P:SuperSocket.Connection.IConnection.CloseReason">
+            <summary>
+            Gets the reason for the connection closure, if available.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IConnection.ConnectionToken">
+            <summary>
+            Gets the cancellation token associated with the connection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IConnection.ProxyInfo">
+            <summary>
+            Gets the proxy information associated with the connection.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Connection.IConnectionFactory">
+            <summary>
+            Represents a factory for creating connections.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.IConnectionFactory.CreateConnection(System.Object,System.Threading.CancellationToken)">
+            <summary>
+            Creates a new connection asynchronously.
+            </summary>
+            <param name="connection">The underlying connection object.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation. The task result contains the created connection.</returns>
+        </member>
+        <member name="T:SuperSocket.Connection.IConnectionWithSessionIdentifier">
+            <summary>
+            Represents a connection that includes a unique session identifier.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IConnectionWithSessionIdentifier.SessionIdentifier">
+            <summary>
+            Gets the unique identifier for the connection session.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Connection.IPipeConnection">
+            <summary>
+            Represents a pipe-based connection with input and output capabilities.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IPipeConnection.PipelineFilter">
+            <summary>
+            Gets the pipeline filter used for processing data.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IPipeConnection.InputReader">
+            <summary>
+            Gets the pipe reader for reading input data.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IPipeConnection.OutputWriter">
+            <summary>
+            Gets the pipe writer for writing output data.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Connection.IStreamConnection">
+            <summary>
+            Represents a connection that provides access to a stream.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.IStreamConnection.Stream">
+            <summary>
+            Gets the stream associated with the connection.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Connection.IVirtualConnection">
+            <summary>
+            Represents a virtual connection with pipe-based data writing capabilities.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.IVirtualConnection.WriteInputPipeDataAsync(System.ReadOnlyMemory{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Writes data to the input pipe asynchronously.
+            </summary>
+            <param name="memory">The memory buffer containing the data to write.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous write operation, including the flush result.</returns>
+        </member>
+        <member name="T:SuperSocket.Connection.PipeConnection">
+            <summary>
+            Represents a pipe-based connection with input and output capabilities.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.PipeConnection.Input">
+            <summary>
+            Gets the input pipe for the connection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.PipeConnection.Output">
+            <summary>
+            Gets the output pipe for the connection.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnection.#ctor(SuperSocket.Connection.ConnectionOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.PipeConnection"/> class with the specified connection options.
+            </summary>
+            <param name="options">The connection options.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnection.#ctor(System.IO.Pipelines.Pipe,System.IO.Pipelines.Pipe,SuperSocket.Connection.ConnectionOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.PipeConnection"/> class with the specified input and output pipes and connection options.
+            </summary>
+            <param name="input">The input pipe.</param>
+            <param name="output">The output pipe.</param>
+            <param name="options">The connection options.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnection.GetConnectionTask(System.Threading.Tasks.Task,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnection.ProcessSends">
+            <summary>
+            Processes send operations for the connection.
+            </summary>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnection.FillInputPipeAsync(System.IO.Pipelines.PipeWriter,System.Threading.CancellationToken)">
+            <summary>
+            Fills the input pipe with data received from the connection asynchronously.
+            </summary>
+            <param name="writer">The input pipe writer for incoming data.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnection.ProcessOutputRead(System.IO.Pipelines.PipeReader)">
+            <summary>
+            Processes output data read from the pipe.
+            </summary>
+            <param name="reader">The pipe reader to read data from.</param>
+            <returns>A value task that represents the asynchronous operation. The result indicates whether the operation is completed or cancelled.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnection.SendOverIOAsync(System.Buffers.ReadOnlySequence{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously using the specified buffer.
+            </summary>
+            <param name="buffer">The buffer containing the data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>The total number of bytes sent.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnection.GetArrayByMemory(System.ReadOnlyMemory{System.Byte})">
+            <summary>
+            Gets an array segment from the specified memory buffer.
+            </summary>
+            <param name="memory">The memory buffer to extract the array segment from.</param>
+            <returns>The array segment representing the memory buffer.</returns>
+            <exception cref="T:System.InvalidOperationException">Thrown if the memory buffer is not backed by an array.</exception>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnection.IsIgnorableException(System.Exception)">
+            <summary>
+            Determines whether the specified exception is ignorable.
+            </summary>
+            <param name="e">The exception to check.</param>
+            <returns><c>true</c> if the exception is ignorable; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnection.FillInputPipeWithDataAsync(System.Memory{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Fills the input pipe with data received from the connection asynchronously.
+            </summary>
+            <param name="memory">The memory buffer to fill.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>The total number of bytes read.</returns>
+        </member>
+        <member name="T:SuperSocket.Connection.PipeConnectionBase">
+            <summary>
+            Provides a base class for pipe-based connections, implementing common connection functionality.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.PipeConnectionBase.SendLock">
+            <summary>
+            Gets the semaphore used to synchronize send operations.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.PipeConnectionBase.OutputWriter">
+            <summary>
+            Gets the pipe writer for output data.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.PipeConnectionBase.InputReader">
+            <summary>
+            Gets the pipe reader for input data.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.PipeConnectionBase.Logger">
+            <summary>
+            Gets the logger used for logging connection events.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.PipeConnectionBase.Options">
+            <summary>
+            Gets the connection options.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.#ctor(System.IO.Pipelines.PipeReader,System.IO.Pipelines.PipeWriter,SuperSocket.Connection.ConnectionOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.PipeConnectionBase"/> class with the specified input and output pipes and connection options.
+            </summary>
+            <param name="inputReader">The pipe reader for input data.</param>
+            <param name="outputWriter">The pipe writer for output data.</param>
+            <param name="options">The connection options.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.UpdateLastActiveTime">
+            <summary>
+            Updates the last active time of the connection to the current time.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.GetConnectionTask(System.Threading.Tasks.Task,System.Threading.CancellationToken)">
+            <summary>
+            Gets a task which represents the connection.
+            </summary>
+            <param name="readTask">The read task.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.RunAsync``1(SuperSocket.ProtoBase.IPipelineFilter{``0})">
+            <summary>
+            Runs the connection asynchronously with the specified pipeline filter.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+            <param name="pipelineFilter">The pipeline filter to use for processing data.</param>
+            <returns>An asynchronous enumerable of package information.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.Close">
+            <summary>
+            Closes the connection and releases associated resources.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.CloseAsync(SuperSocket.Connection.CloseReason)">
+            <summary>
+            Closes the connection asynchronously with the specified reason.
+            </summary>
+            <param name="closeReason">The reason for closing the connection.</param>
+            <returns>A task that represents the asynchronous close operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.CancelAsync">
+            <summary>
+            Cancels all the operations on the connection.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.IsIgnorableException(System.Exception)">
+            <summary>
+            Checks if the specified exception is ignorable.
+            </summary>
+            <param name="e">The exception.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.SendAsync(System.ReadOnlyMemory{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously using the specified buffer.
+            </summary>
+            <param name="buffer">The buffer containing the data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.SendAsync(System.Buffers.ReadOnlySequence{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously using the specified buffer.
+            </summary>
+            <param name="buffer">The buffer containing the data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.SendAsync``1(SuperSocket.ProtoBase.IPackageEncoder{``0},``0,System.Threading.CancellationToken)">
+            <summary>
+            Sends a package over the connection asynchronously using the specified encoder and package.
+            </summary>
+            <typeparam name="TPackage">The type of the package to send.</typeparam>
+            <param name="packageEncoder">The encoder to use for the package.</param>
+            <param name="package">The package to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.SendAsync(System.Action{System.IO.Pipelines.PipeWriter},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously using a custom write action.
+            </summary>
+            <param name="write">The action to write data to the pipe writer.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.WritePackageWithEncoder``1(System.Buffers.IBufferWriter{System.Byte},SuperSocket.ProtoBase.IPackageEncoder{``0},``0)">
+            <summary>
+            Writes a package to the output writer using the specified encoder.
+            </summary>
+            <typeparam name="TPackage">The package type.</typeparam>
+            <param name="writer">The buffer writer.</param>
+            <param name="packageEncoder">The package encoder.</param>
+            <param name="package">The package.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.OnInputPipeRead(System.IO.Pipelines.ReadResult)">
+            <summary>
+            Invoked when data is read from the input pipe.
+            </summary>
+            <param name="result">The read result.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.ReadPipeAsync``1(System.IO.Pipelines.PipeReader,System.Threading.CancellationToken)">
+            <summary>
+            Reads data from the input pipe asynchronously and processes it using the specified pipeline filter.
+            </summary>
+            <typeparam name="TPackageInfo">The package type.</typeparam>
+            <param name="reader">The pipe reader.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.DetachAsync">
+            <summary>
+            Detaches the connection asynchronously.
+            </summary>
+            <returns>A task that represents the asynchronous detach operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.OnError(System.String,System.Exception)">
+            <summary>
+            Handles errors that occur during connection operations.
+            </summary>
+            <param name="message">The error message.</param>
+            <param name="e">The exception that occurred, if any.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.CompleteReaderAsync(System.IO.Pipelines.PipeReader,System.Boolean)">
+            <summary>
+            Completes the reader asynchronously.
+            </summary>
+            <param name="reader">The pipe reader.</param>
+            <param name="isDetaching">Indicates if this operation is a part of detaching action.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.PipeConnectionBase.CompleteWriterAsync(System.IO.Pipelines.PipeWriter,System.Boolean)">
+            <summary>
+            Completes the writer asynchronously.
+            </summary>
+            <param name="writer">The pipe writer.</param>
+            <param name="isDetaching">Indicates if this operation is a part of detaching action.</param>
+        </member>
+        <member name="T:SuperSocket.Connection.ReadWriteDelegateStream">
+            <summary>
+            Represents a stream that delegates read and write operations to separate streams.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Connection.ReadWriteDelegateStream.BaseStream">
+            <summary>
+            Gets the base stream associated with this delegate stream.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.#ctor(System.IO.Stream,System.IO.Stream,System.IO.Stream)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.ReadWriteDelegateStream"/> class with the specified base, read, and write streams.
+            </summary>
+            <param name="stream">The base stream.</param>
+            <param name="readStream">The stream used for reading operations.</param>
+            <param name="writeStream">The stream used for writing operations.</param>
+        </member>
+        <member name="P:SuperSocket.Connection.ReadWriteDelegateStream.CanRead">
+            <inheritdoc/>
+        </member>
+        <member name="P:SuperSocket.Connection.ReadWriteDelegateStream.CanSeek">
+            <inheritdoc/>
+        </member>
+        <member name="P:SuperSocket.Connection.ReadWriteDelegateStream.CanWrite">
+            <inheritdoc/>
+        </member>
+        <member name="P:SuperSocket.Connection.ReadWriteDelegateStream.Length">
+            <inheritdoc/>
+        </member>
+        <member name="P:SuperSocket.Connection.ReadWriteDelegateStream.Position">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.Flush">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.Read(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.Seek(System.Int64,System.IO.SeekOrigin)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.SetLength(System.Int64)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.Write(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.Write(System.ReadOnlySpan{System.Byte})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.Read(System.Span{System.Byte})">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.BeginRead(System.Byte[],System.Int32,System.Int32,System.AsyncCallback,System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.BeginWrite(System.Byte[],System.Int32,System.Int32,System.AsyncCallback,System.Object)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.Close">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.CopyTo(System.IO.Stream,System.Int32)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.CopyToAsync(System.IO.Stream,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.DisposeAsync">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.EndRead(System.IAsyncResult)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.EndWrite(System.IAsyncResult)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.FlushAsync(System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.ReadAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.ReadAsync(System.Memory{System.Byte},System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.ReadByte">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.WriteAsync(System.Byte[],System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.WriteAsync(System.ReadOnlyMemory{System.Byte},System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.ReadWriteDelegateStream.WriteByte(System.Byte)">
+            <inheritdoc/>
+        </member>
+        <member name="P:SuperSocket.Connection.ReadWriteDelegateStream.CanTimeout">
+            <inheritdoc/>
+        </member>
+        <member name="P:SuperSocket.Connection.ReadWriteDelegateStream.ReadTimeout">
+            <inheritdoc/>
+        </member>
+        <member name="P:SuperSocket.Connection.ReadWriteDelegateStream.WriteTimeout">
+            <inheritdoc/>
+        </member>
+        <member name="T:SuperSocket.Connection.RelayPipeConnection">
+            <summary>
+            Represents a pipe connection that relays data between input and output pipes.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.RelayPipeConnection.RebuildOptionsWithPipes(SuperSocket.Connection.ConnectionOptions,System.IO.Pipelines.Pipe,System.IO.Pipelines.Pipe)">
+            <summary>
+            Rebuilds the connection options with the specified input and output pipes.
+            </summary>
+            <param name="options">The original connection options.</param>
+            <param name="pipeIn">The input pipe.</param>
+            <param name="pipeOut">The output pipe.</param>
+            <returns>The updated connection options.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.RelayPipeConnection.#ctor(SuperSocket.Connection.ConnectionOptions,System.IO.Pipelines.Pipe,System.IO.Pipelines.Pipe)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.RelayPipeConnection"/> class with the specified options and pipes.
+            </summary>
+            <param name="options">The connection options.</param>
+            <param name="pipeIn">The input pipe.</param>
+            <param name="pipeOut">The output pipe.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.RelayPipeConnection.Close">
+            <summary>
+            Closes the connection by completing the input and output writers.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.RelayPipeConnection.SendOverIOAsync(System.Buffers.ReadOnlySequence{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously.
+            </summary>
+            <param name="buffer">The data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>The total number of bytes sent.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.RelayPipeConnection.FillInputPipeWithDataAsync(System.Memory{System.Byte},System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:SuperSocket.Connection.SocketExtensions">
+            <summary>
+            Provides extension methods for working with sockets.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.SocketExtensions.IsIgnorableSocketException(System.Net.Sockets.SocketException)">
+            <summary>
+            Determines whether the specified <see cref="T:System.Net.Sockets.SocketException"/> is ignorable.
+            </summary>
+            <param name="se">The <see cref="T:System.Net.Sockets.SocketException"/> to evaluate.</param>
+            <returns><c>true</c> if the exception is ignorable; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="T:SuperSocket.Connection.SocketSender">
+            <summary>
+            Represents a sender for asynchronous socket operations using <see cref="T:System.Net.Sockets.SocketAsyncEventArgs"/>.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.SocketSender.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.SocketSender"/> class.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.SocketSender.#ctor(System.IO.Pipelines.PipeScheduler)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.SocketSender"/> class.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.SocketSender.SendAsync(System.Net.Sockets.Socket,System.Buffers.ReadOnlySequence{System.Byte}@)">
+            <summary>
+            Sends data asynchronously over the specified socket.
+            </summary>
+            <param name="socket">The socket to send data over.</param>
+            <param name="buffer">The data to send.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.ValueTask`1"/> representing the asynchronous send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.SocketSender.OnCompleted(System.Net.Sockets.SocketAsyncEventArgs)">
+            <summary>
+            Handles the completion of the asynchronous socket operation.
+            </summary>
+            <param name="e">The <see cref="T:System.Net.Sockets.SocketAsyncEventArgs"/> instance containing event data.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.SocketSender.GetResult(System.Int16)">
+            <summary>
+            Gets the result of the asynchronous operation.
+            </summary>
+            <param name="token">The token associated with the operation.</param>
+            <returns>The number of bytes transferred.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.SocketSender.GetStatus(System.Int16)">
+            <summary>
+            Gets the status of the asynchronous operation.
+            </summary>
+            <param name="token">The token associated with the operation.</param>
+            <returns>The status of the operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.SocketSender.OnCompleted(System.Action{System.Object},System.Object,System.Int16,System.Threading.Tasks.Sources.ValueTaskSourceOnCompletedFlags)">
+            <summary>
+            Schedules the continuation action for the asynchronous operation.
+            </summary>
+            <param name="continuation">The continuation action to invoke.</param>
+            <param name="state">The state to pass to the continuation action.</param>
+            <param name="token">The token associated with the operation.</param>
+            <param name="flags">Flags that control the behavior of the continuation.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.SocketSender.TryReset">
+            <summary>
+            Attempts to reset the state of the sender.
+            </summary>
+            <returns><c>true</c> if the state was successfully reset; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="T:SuperSocket.Connection.StreamPipeConnection">
+            <summary>
+            Represents a connection that uses a stream for data transmission.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.StreamPipeConnection.#ctor(System.IO.Stream,System.Net.EndPoint,SuperSocket.Connection.ConnectionOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.StreamPipeConnection"/> class with the specified stream, remote endpoint, and connection options.
+            </summary>
+            <param name="stream">The stream used for data transmission.</param>
+            <param name="remoteEndPoint">The remote endpoint of the connection.</param>
+            <param name="options">The connection options.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.StreamPipeConnection.#ctor(System.IO.Stream,System.Net.EndPoint,System.Net.EndPoint,SuperSocket.Connection.ConnectionOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.StreamPipeConnection"/> class with the specified stream, remote endpoint, local endpoint, and connection options.
+            </summary>
+            <param name="stream">The stream used for data transmission.</param>
+            <param name="remoteEndPoint">The remote endpoint of the connection.</param>
+            <param name="localEndPoint">The local endpoint of the connection.</param>
+            <param name="options">The connection options.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.StreamPipeConnection.Close">
+            <summary>
+            Closes the connection and releases the associated resources.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.StreamPipeConnection.OnClosed">
+            <summary>
+            Handles actions to perform when the connection is closed.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.StreamPipeConnection.FillInputPipeWithDataAsync(System.Memory{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Reads data from the input stream into the specified memory buffer.
+            </summary>
+            <param name="memory">The memory buffer to fill with data.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>The number of bytes read from the stream.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.StreamPipeConnection.SendOverIOAsync(System.Buffers.ReadOnlySequence{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the stream using the specified buffer.
+            </summary>
+            <param name="buffer">The buffer containing the data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>The total number of bytes sent.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.StreamPipeConnection.IsIgnorableException(System.Exception)">
+            <summary>
+            Determines whether the specified exception is ignorable.
+            </summary>
+            <param name="e">The exception to check.</param>
+            <returns><c>true</c> if the exception is ignorable; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="P:SuperSocket.Connection.StreamPipeConnection.SuperSocket#Connection#IStreamConnection#Stream">
+            <summary>
+            Gets the stream used for data transmission.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Connection.TcpPipeConnection">
+            <summary>
+            Represents a pipe connection for managing TCP-based connections.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.TcpPipeConnection.#ctor(System.Net.Sockets.Socket,SuperSocket.Connection.ConnectionOptions,Microsoft.Extensions.ObjectPool.ObjectPool{SuperSocket.Connection.SocketSender})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.TcpPipeConnection"/> class with the specified socket, options, and socket sender pool.
+            </summary>
+            <param name="socket">The TCP socket.</param>
+            <param name="options">The connection options.</param>
+            <param name="socketSenderPool">The pool of socket senders, or <c>null</c> to create new senders as needed.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.TcpPipeConnection.OnClosed">
+            <summary>
+            Handles the closure of the connection.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.TcpPipeConnection.FillInputPipeWithDataAsync(System.Memory{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Fills the pipe with data received from the socket asynchronously.
+            </summary>
+            <param name="memory">The memory buffer to fill with data.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>The total number of bytes read.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.TcpPipeConnection.SendOverIOAsync(System.Buffers.ReadOnlySequence{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the connection asynchronously.
+            </summary>
+            <param name="buffer">The data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>The total number of bytes sent.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.TcpPipeConnection.Close">
+            <summary>
+            Closes the connection by shutting down and closing the socket.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.TcpPipeConnection.IsIgnorableException(System.Exception)">
+            <summary>
+            Determines whether the specified exception is ignorable.
+            </summary>
+            <param name="e">The exception to check.</param>
+            <returns><c>true</c> if the exception is ignorable; otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="T:SuperSocket.Connection.UdpPipeConnection">
+            <summary>
+            Represents a UDP-based pipe connection.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.UdpPipeConnection.#ctor(System.Net.Sockets.Socket,SuperSocket.Connection.ConnectionOptions,System.Net.IPEndPoint)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.UdpPipeConnection"/> class with the specified socket, connection options, and remote endpoint.
+            </summary>
+            <param name="socket">The socket used for the connection.</param>
+            <param name="options">The connection options.</param>
+            <param name="remoteEndPoint">The remote endpoint of the connection.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.UdpPipeConnection.#ctor(System.Net.Sockets.Socket,SuperSocket.Connection.ConnectionOptions,System.Net.IPEndPoint,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.UdpPipeConnection"/> class with the specified socket, connection options, remote endpoint, and session identifier.
+            </summary>
+            <param name="socket">The socket used for the connection.</param>
+            <param name="options">The connection options.</param>
+            <param name="remoteEndPoint">The remote endpoint of the connection.</param>
+            <param name="sessionIdentifier">The session identifier for the connection.</param>
+        </member>
+        <member name="P:SuperSocket.Connection.UdpPipeConnection.SessionIdentifier">
+            <summary>
+            Gets the session identifier for the connection.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.UdpPipeConnection.Close">
+            <summary>
+            Closes the connection and completes the input writer.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.UdpPipeConnection.FillInputPipeWithDataAsync(System.Memory{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Throws a <see cref="T:System.NotSupportedException"/> as filling the pipe with data is not supported for UDP connections.
+            </summary>
+            <param name="memory">The memory buffer to fill with data.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.UdpPipeConnection.SendOverIOAsync(System.Buffers.ReadOnlySequence{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data over the UDP connection using the specified buffer.
+            </summary>
+            <param name="buffer">The buffer containing the data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>The total number of bytes sent.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.UdpPipeConnection.ProcessSends">
+            <summary>
+            Processes send operations for the connection.
+            </summary>
+            <returns>A task representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.UdpPipeConnection.MergeBuffer(System.Buffers.ReadOnlySequence{System.Byte}@,System.Byte[])">
+            <summary>
+            Merges the specified buffer into the destination buffer.
+            </summary>
+            <param name="buffer">The source buffer to merge.</param>
+            <param name="destBuffer">The destination buffer to fill.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.UdpPipeConnection.SendAsync(System.ReadOnlyMemory{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data asynchronously using the specified buffer.
+            </summary>
+            <param name="buffer">The buffer containing the data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.UdpPipeConnection.SendAsync(System.Buffers.ReadOnlySequence{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends data asynchronously using the specified buffer.
+            </summary>
+            <param name="buffer">The buffer containing the data to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.UdpPipeConnection.SendAsync``1(SuperSocket.ProtoBase.IPackageEncoder{``0},``0,System.Threading.CancellationToken)">
+            <summary>
+            Sends a package asynchronously using the specified encoder and package.
+            </summary>
+            <typeparam name="TPackage">The type of the package.</typeparam>
+            <param name="packageEncoder">The encoder used to encode the package.</param>
+            <param name="package">The package to send.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Connection.UdpPipeConnection.SendAsync(System.Action{System.IO.Pipelines.PipeWriter},System.Threading.CancellationToken)">
+            <summary>
+            Sends data asynchronously using the specified write action.
+            </summary>
+            <param name="write">The action to write data to the pipe writer.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task representing the asynchronous operation.</returns>
+        </member>
+        <member name="T:SuperSocket.Connection.VirtualConnection">
+            <summary>
+            Provides an abstract base class for virtual connections, extending pipe-based connection functionality.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Connection.VirtualConnection.#ctor(SuperSocket.Connection.ConnectionOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Connection.VirtualConnection"/> class with the specified connection options.
+            </summary>
+            <param name="options">The connection options.</param>
+        </member>
+        <member name="M:SuperSocket.Connection.VirtualConnection.FillInputPipeAsync(System.IO.Pipelines.PipeWriter,System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="M:SuperSocket.Connection.VirtualConnection.WriteInputPipeDataAsync(System.ReadOnlyMemory{System.Byte},System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+    </members>
+</doc>

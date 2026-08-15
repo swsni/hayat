@@ -1,0 +1,18 @@
+{
+  "formatVersion": 1,
+  "description": "Hayat Beauty And Care Membership Pass",
+  "organizationName": "Hayat Beauty And Care",
+  "logoText": "Hayat Beauty And Care",
+  "backgroundColor": "rgb(125, 131, 78)",
+  "foregroundColor": "rgb(255, 255, 255)",
+  "labelColor": "rgb(238, 241, 232)",
+
+  "webServiceURL": "https://hayat.beauty/api",
+  "locations": [
+    {
+      "latitude": 26.171864,
+      "longitude": 50.483139,
+      "relevantText": "مرحباً بكِ في حياة بيوتي فرع الجنبية! تفضلي الكوفي شوب واستمتعي بجلسة العناية."
+    }
+  ]
+}

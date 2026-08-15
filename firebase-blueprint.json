@@ -1,0 +1,141 @@
+{
+  "entities": {
+    "staff": {
+      "title": "Staff Member",
+      "description": "Staff profile with access PIN",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Display name of the staff member" },
+        "pin": { "type": "string", "description": "Strictly numeric secret login PIN" },
+        "role": { "type": "string", "description": "Role: 'admin' or 'staff'" },
+        "branchPermissions": { "type": "array", "description": "Branches this staff has access to, or ['All']" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "pin", "role", "branchPermissions"]
+    },
+    "branches": {
+      "title": "Branch",
+      "description": "System operational branch",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Branch name (e.g. Riffa, Janabiya)" },
+        "description": { "type": "string", "description": "Brief luxury description" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name"]
+    },
+    "settings": {
+      "title": "AppSettings",
+      "description": "Global company settings",
+      "type": "object",
+      "properties": {
+        "companyName": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["companyName"]
+    },
+    "packages": {
+      "title": "Package or Membership",
+      "description": "Available packages for salons or gym memberships",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "price": { "type": "number", "description": "Price in BHD" },
+        "sessions": { "type": "number", "description": "Number of sessions" },
+        "category": { "type": "string", "description": "Category: 'salon' or 'gym'" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "price", "sessions", "category"]
+    },
+    "customers": {
+      "title": "Customer",
+      "description": "Customer profile containing personal details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Customer display name" },
+        "phone": { "type": "string", "description": "Strictly numeric 8-digit mobile contact" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phone", "createdAt"]
+    },
+    "customerPackages": {
+      "title": "Customer Package",
+      "description": "Allocated package/membership owned by a customer",
+      "type": "object",
+      "properties": {
+        "customerId": { "type": "string", "description": "Document ID reference of the owner customer" },
+        "packageId": { "type": "string", "description": "ID reference of package template from catalog" },
+        "packageName": { "type": "string", "description": "Name of the purchased package" },
+        "category": { "type": "string", "description": "Category of package: 'salon' or 'gym'" },
+        "totalSessions": { "type": "number", "description": "Total original sessions pool" },
+        "remainingSessions": { "type": "number", "description": "Currently remaining session count" },
+        "purchasedAt": { "type": "string", "format": "date-time" },
+        "isActive": { "type": "boolean", "description": "Active flag for authorization checks" }
+      },
+      "required": ["customerId", "packageId", "packageName", "category", "totalSessions", "remainingSessions", "purchasedAt", "isActive"]
+    },
+    "auditLogs": {
+      "title": "Audit Log",
+      "description": "Historically tracked action on a customer profile for auditing",
+      "type": "object",
+      "properties": {
+        "customerId": { "type": "string", "description": "Document ID reference of affected customer" },
+        "action": { "type": "string", "description": "Type of action: e.g. 'Purchase', 'Deduct', 'Undo', 'Bonus Provision'" },
+        "description": { "type": "string", "description": "Detailed summary describing the action" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "staffName": { "type": "string", "description": "Name of active staff doing the action" },
+        "branch": { "type": "string", "description": "Operating branch name" }
+      },
+      "required": ["customerId", "action", "description", "timestamp", "staffName", "branch"]
+    },
+    "invoices": {
+      "title": "Invoice",
+      "description": "Checkout and sale invoice receipt record",
+      "type": "object",
+      "properties": {
+        "primaryCustomerId": { "type": "string", "description": "ID of buying customer profile" },
+        "amount": { "type": "number", "description": "Settled monetary value in BHD" },
+        "paymentMethod": { "type": "string", "description": "Selected method: Card, BenefitPay, Cash, Paid Previously" },
+        "description": { "type": "string", "description": "Included item or template name" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "branch": { "type": "string", "description": "Checkout branch name" },
+        "staffName": { "type": "string", "description": "Registering checkout cashier name" }
+      },
+      "required": ["primaryCustomerId", "amount", "paymentMethod", "description", "createdAt", "branch", "staffName"]
+    }
+  },
+  "firestore": {
+    "/staff/{staffId}": {
+      "schema": "staff",
+      "description": "Staff profile collection"
+    },
+    "/branches/{branchId}": {
+      "schema": "branches",
+      "description": "Active branches"
+    },
+    "/settings/{settingsId}": {
+      "schema": "settings",
+      "description": "System configurations"
+    },
+    "/packages/{packageId}": {
+      "schema": "packages",
+      "description": "Salon packages and gym memberships"
+    },
+    "/customers/{customerId}": {
+      "schema": "customers",
+      "description": "Registered customer profiles"
+    },
+    "/customerPackages/{packageId}": {
+      "schema": "customerPackages",
+      "description": "Purchased customer passes and benefits"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "auditLogs",
+      "description": "Activity log ledger"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "invoices",
+      "description": "Financial sales receipt invoices"
+    }
+  }
+}

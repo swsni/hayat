@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Global Safety Net ────────────────────────────────────────────────────
+    // Deny everything unless an explicit rule below grants access.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ─── Helper Functions ─────────────────────────────────────────────────────
+
+    // Requires any valid Firebase Auth token (anonymous sign-in satisfies this).
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Requires the server-issued `admin: true` custom claim.
+    // This claim is only set by the /api/auth/elevate server endpoint
+    // after verifying the PIN matches an admin record in Firestore.
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Validates that a document ID is a safe alphanumeric string.
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // ─── Staff ────────────────────────────────────────────────────────────────
+    // Reads are allowed to any signed-in user so the PIN login flow can query
+    // the collection before a custom claim is issued.
+    // Writes (create/update/delete) are admin-only — prevents privilege escalation.
+    match /staff/{staffId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── Settings ─────────────────────────────────────────────────────────────
+    // Company-wide settings are readable by all signed-in staff.
+    // Only admins may change them.
+    match /settings/{settingsId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ─── Branches ─────────────────────────────────────────────────────────────
+    // Branch configuration is readable by all signed-in staff.
+    // Only admins may add/edit/remove branches.
+    match /branches/{branchId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ─── Service Packages ─────────────────────────────────────────────────────
+    // Package catalogue is readable by all signed-in staff (needed for POS).
+    // Only admins may create or modify packages.
+    match /packages/{packageId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ─── Customers ────────────────────────────────────────────────────────────
+    // All signed-in staff can create and update customers.
+    // Only admins may permanently delete customer records.
+    match /customers/{customerId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Customer Packages ────────────────────────────────────────────────────
+    match /customerPackages/{packageId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Audit Logs ───────────────────────────────────────────────────────────
+    // Logs may be created by any signed-in user but never deleted by the client.
+    match /auditLogs/{logId} {
+      allow read, create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // ─── Invoices ─────────────────────────────────────────────────────────────
+    match /invoices/{invoiceId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Café Categories ───────────────────────────────────────────────────
+    match /cafe_categories/{categoryId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── Café Menu Items ────────────────────────────────────────────────────
+    match /cafe_items/{itemId} {
+      allow read, create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // ─── Café Orders ──────────────────────────────────────────────────────────
+    match /cafe_orders/{orderId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Suspended Café Orders ──────────────────────────────────────────────
+    match /suspended_orders/{orderId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Shifts ───────────────────────────────────────────────────────────────
+    match /shifts/{shiftId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Web Notifications ────────────────────────────────────────────────────
+    // Server writes notification documents via Admin SDK (bypasses rules).
+    // Signed-in clients can read/update read-state.
+    match /web_notifications/{notificationId} {
+      allow read, update: if isSignedIn();
+      allow create, delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Hayat Beauty & Care",
+  "short_name": "Hayat Beauty",
+  "description": "Multi-Branch Management and POS System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#757e65",
+  "theme_color": "#757e65",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/logoo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

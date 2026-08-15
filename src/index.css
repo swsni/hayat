@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..700;1,400..700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", serif;
+  --font-sans: "Inter", sans-serif;
+  
+  --color-brand-olive: #8F9D58;
+  --color-brand-olive-hover: #7E8C4B;
+  --color-olive-dark: #2E331F;
+  --color-olive-dark-hover: #1E2215;
+  --color-olive-light: #EBF0E1;
+  --color-olive-soft: #FBFBF9;
+}
+
+@utility font-serif {
+  font-family: var(--font-serif);
+}
+
+@utility font-sans {
+  font-family: var(--font-sans);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-olive-soft);
+  color: var(--color-olive-dark);
+}
+
+/* Luxury transitions and scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-olive-soft);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-olive);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-olive-dark);
+}
+
+/* Thermal Printer CSS - Phase 6 */
+@media print {
+  @page {
+    margin: 0;
+    size: 80mm auto; /* Standard thermal receipt width */
+  }
+
+  body.printing-eod, body.printing-receipt {
+    background: white;
+    color: black;
+    font-size: 12px;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.printing-eod *, body.printing-receipt * {
+    visibility: hidden;
+  }
+
+  body.printing-eod .eod-modal-content,
+  body.printing-eod .eod-modal-content * {
+    visibility: visible;
+  }
+
+  body.printing-receipt .receipt-preview-container,
+  body.printing-receipt .receipt-preview-container * {
+    visibility: visible;
+  }
+
+  body.printing-eod .no-print-bg, body.printing-receipt .no-print {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  body.printing-eod .eod-modal-content, body.printing-receipt .receipt-preview-container {
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 5mm 4mm 10mm 4mm !important;
+    margin: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  body.printing-eod .hide-on-print, body.printing-receipt .no-print {
+    display: none !important;
+  }
+
+  body.printing-eod .text-brand-olive, body.printing-receipt .text-brand-olive,
+  body.printing-eod .text-olive-dark, body.printing-receipt .text-olive-dark,
+  body.printing-eod .bg-gray-100, body.printing-receipt .bg-gray-100,
+  body.printing-eod .bg-gray-50, body.printing-receipt .bg-gray-50,
+  body.printing-eod .text-gray-400, body.printing-receipt .text-gray-400,
+  body.printing-eod .text-gray-500, body.printing-receipt .text-gray-500,
+  body.printing-eod .text-gray-600, body.printing-receipt .text-gray-600 {
+    color: black !important;
+    background: transparent !important;
+    border-color: black !important;
+  }
+}

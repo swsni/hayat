@@ -1,0 +1,838 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SuperSocket.Command</name>
+    </assembly>
+    <members>
+        <member name="T:SuperSocket.Command.AsyncCommandFilterAttribute">
+            <summary>
+            Represents an attribute for filtering asynchronous commands.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.AsyncCommandFilterAttribute.OnCommandExecutingAsync(SuperSocket.Command.CommandExecutingContext)">
+            <summary>
+            Called before a command is executed asynchronously.
+            </summary>
+            <param name="commandContext">The context of the command being executed.</param>
+            <returns>A task that represents the asynchronous operation. Returns true if the command should continue execution; otherwise, false.</returns>
+        </member>
+        <member name="M:SuperSocket.Command.AsyncCommandFilterAttribute.OnCommandExecutedAsync(SuperSocket.Command.CommandExecutingContext)">
+            <summary>
+            Called after a command is executed asynchronously.
+            </summary>
+            <param name="commandContext">The context of the command that was executed.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.CommandAttribute">
+            <summary>
+            Specifies metadata for a command, including its name and key.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandAttribute.Name">
+            <summary>
+            Gets or sets the name of the command.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandAttribute.Key">
+            <summary>
+            Gets or sets the key associated with the command.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandAttribute.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandAttribute"/> class.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandAttribute.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandAttribute"/> class with the specified name.
+            </summary>
+            <param name="name">The name of the command.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandAttribute.#ctor(System.String,System.Object)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandAttribute"/> class with the specified name and key.
+            </summary>
+            <param name="name">The name of the command.</param>
+            <param name="key">The key associated with the command.</param>
+        </member>
+        <member name="T:SuperSocket.Command.CommandExecutingContext">
+            <summary>
+            Represents the context for executing a command.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandExecutingContext.Session">
+            <summary>
+            Gets the session.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandExecutingContext.Package">
+            <summary>
+            Gets the request info.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandExecutingContext.CurrentCommand">
+            <summary>
+            Gets the current command.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandExecutingContext.Exception">
+            <summary>
+            Gets the exception.
+            </summary>
+            <value>
+            The exception.
+            </value>
+        </member>
+        <member name="P:SuperSocket.Command.CommandExecutingContext.CancellationToken">
+            <summary>
+            Gets the cancellation token.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Command.ICommandFilter">
+            <summary>
+            Defines a filter that can be applied to commands.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.ICommandFilter.Order">
+            <summary>
+            Gets the execution order of the filter.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Command.CommandFilterBaseAttribute">
+            <summary>
+            Represents a base attribute for command filters.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandFilterBaseAttribute.Order">
+            <summary>
+            Gets or sets the execution order of the filter.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Command.CommandFilterAttribute">
+            <summary>
+            Represents an attribute for filtering commands.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandFilterAttribute.OnCommandExecuting(SuperSocket.Command.CommandExecutingContext)">
+            <summary>
+            Called before a command is executed.
+            </summary>
+            <param name="commandContext">The context of the command being executed.</param>
+            <returns>True if the command should continue execution; otherwise, false.</returns>
+        </member>
+        <member name="M:SuperSocket.Command.CommandFilterAttribute.OnCommandExecuted(SuperSocket.Command.CommandExecutingContext)">
+            <summary>
+            Called after a command is executed.
+            </summary>
+            <param name="commandContext">The context of the command that was executed.</param>
+        </member>
+        <member name="T:SuperSocket.Command.CommandMetadata">
+            <summary>
+            Represents metadata for a command, including its name and key.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandMetadata.Name">
+            <summary>
+            Gets the name of the command.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandMetadata.Key">
+            <summary>
+            Gets the key associated with the command.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMetadata.#ctor(System.String,System.Object)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandMetadata"/> class with the specified name and key.
+            </summary>
+            <param name="name">The name of the command.</param>
+            <param name="key">The key associated with the command.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMetadata.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandMetadata"/> class with the specified name.
+            The key is set to the same value as the name.
+            </summary>
+            <param name="name">The name of the command.</param>
+        </member>
+        <member name="T:SuperSocket.Command.CommandMiddleware`2">
+            <summary>
+            Represents a middleware for handling commands in a SuperSocket application.
+            </summary>
+            <typeparam name="TKey">The type of the command key.</typeparam>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`2.#ctor(System.IServiceProvider,Microsoft.Extensions.Options.IOptions{SuperSocket.Command.CommandOptions})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandMiddleware`2"/> class.
+            </summary>
+            <param name="serviceProvider">The service provider for dependency injection.</param>
+            <param name="commandOptions">The options for configuring commands.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`2.CreatePackageMapper(System.IServiceProvider)">
+            <summary>
+            Creates a package mapper for mapping packages to commands.
+            </summary>
+            <param name="serviceProvider">The service provider for dependency injection.</param>
+            <returns>An instance of <see cref="T:SuperSocket.Command.IPackageMapper`2"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`2.TransparentMapper.Map(`1)">
+            <summary>
+            Maps a package to itself.
+            </summary>
+            <param name="package">The package to map.</param>
+            <returns>The same package.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.CommandMiddleware`3">
+            <summary>
+            Represents a middleware for handling commands with package mapping capability.
+            </summary>
+            <typeparam name="TKey">The type of the command key.</typeparam>
+            <typeparam name="TNetPackageInfo">The type of the network package information.</typeparam>
+            <typeparam name="TPackageInfo">The type of the package information after mapping.</typeparam>
+        </member>
+        <member name="F:SuperSocket.Command.CommandMiddleware`3._commands">
+            <summary>
+            Dictionary of available commands indexed by their keys.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Command.CommandMiddleware`3._unknownPackageHandler">
+            <summary>
+            Handler for processing packages with unknown keys.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Command.CommandMiddleware`3._logger">
+            <summary>
+            Logger instance for the command middleware.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandMiddleware`3.PackageMapper">
+            <summary>
+            Gets the package mapper that converts network packages to command packages.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.#ctor(System.IServiceProvider,Microsoft.Extensions.Options.IOptions{SuperSocket.Command.CommandOptions})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandMiddleware`3"/> class.
+            </summary>
+            <param name="serviceProvider">The service provider for dependency injection.</param>
+            <param name="commandOptions">The options for configuring commands.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.#ctor(System.IServiceProvider,Microsoft.Extensions.Options.IOptions{SuperSocket.Command.CommandOptions},SuperSocket.Command.IPackageMapper{`1,`2})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandMiddleware`3"/> class with a custom package mapper.
+            </summary>
+            <param name="serviceProvider">The service provider for dependency injection.</param>
+            <param name="commandOptions">The options for configuring commands.</param>
+            <param name="packageMapper">A custom package mapper implementation.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.CreatePackageMapper(System.IServiceProvider)">
+            <summary>
+            Creates a package mapper for mapping network packages to command packages.
+            </summary>
+            <param name="serviceProvider">The service provider for dependency injection.</param>
+            <returns>An instance of <see cref="T:SuperSocket.Command.IPackageMapper`2"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.HandlePackage(SuperSocket.Server.Abstractions.Session.IAppSession,`2,System.Threading.CancellationToken)">
+            <summary>
+            Handles a package by executing the corresponding command.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="package">The package to handle.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.ValueTask"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.OnPackageReceived(SuperSocket.Server.Abstractions.Session.IAppSession,`2,System.Threading.CancellationToken)">
+            <summary>
+            Called when a package is received.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="package">The package received.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.Task"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.SuperSocket#Server#Abstractions#IPackageHandler{TNetPackageInfo}#Handle(SuperSocket.Server.Abstractions.Session.IAppSession,`1,System.Threading.CancellationToken)">
+            <summary>
+            Handles the package by implementing the <see cref="T:SuperSocket.Server.Abstractions.IPackageHandler`1"/> interface.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="package">The network package.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.ValueTask"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.CommandMiddleware`3.ICommandSet">
+            <summary>
+            Represents a set of commands identified by a key.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandMiddleware`3.ICommandSet.Key">
+            <summary>
+            Gets the key that identifies this command set.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.ICommandSet.ExecuteAsync(SuperSocket.Server.Abstractions.Session.IAppSession,`2,System.Threading.CancellationToken)">
+            <summary>
+            Executes the command asynchronously.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="package">The package containing command information.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A <see cref="T:System.Threading.Tasks.ValueTask"/> representing the asynchronous operation.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.CommandMiddleware`3.CommandTypeInfo">
+            <summary>
+            Contains information about a command type and its factory.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Command.CommandMiddleware`3.ICommandSetFactory">
+            <summary>
+            Interface for factories that create command sets.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.ICommandSetFactory.Create(System.IServiceProvider,SuperSocket.Command.CommandOptions)">
+            <summary>
+            Creates a command set using the provided service provider and options.
+            </summary>
+            <param name="serviceProvider">The service provider for dependency injection.</param>
+            <param name="commandOptions">The command options.</param>
+            <returns>An instance of <see cref="T:SuperSocket.Command.CommandMiddleware`3.ICommandSet"/>.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.CommandMiddleware`3.CommandSetFactory`1">
+            <summary>
+            Factory for creating command sets for a specific app session type.
+            </summary>
+            <typeparam name="TAppSession">The type of the application session.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Command.CommandMiddleware`3.CommandSetFactory`1.CommandType">
+            <summary>
+            Gets information about the command type.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.CommandSetFactory`1.#ctor(SuperSocket.Command.CommandMiddleware{`0,`1,`2}.CommandTypeInfo)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandMiddleware`3.CommandSetFactory`1"/> class.
+            </summary>
+            <param name="commandType">Information about the command type.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.CommandSetFactory`1.Create(System.IServiceProvider,SuperSocket.Command.CommandOptions)">
+            <summary>
+            Creates a command set using the provided service provider and options.
+            </summary>
+            <param name="serviceProvider">The service provider for dependency injection.</param>
+            <param name="commandOptions">The command options.</param>
+            <returns>An instance of <see cref="T:SuperSocket.Command.CommandMiddleware`3.ICommandSet"/>.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.CommandMiddleware`3.CommandSet`1">
+            <summary>
+            Represents a set of commands for a specific application session type.
+            </summary>
+            <typeparam name="TAppSession">The type of the application session.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Command.CommandMiddleware`3.CommandSet`1.AsyncCommand">
+            <summary>
+            Gets the asynchronous command implementation.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandMiddleware`3.CommandSet`1.Command">
+            <summary>
+            Gets the synchronous command implementation.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandMiddleware`3.CommandSet`1.Filters">
+            <summary>
+            Gets the command filters applied to this command set.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandMiddleware`3.CommandSet`1.Metadata">
+            <summary>
+            Gets the metadata for this command.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandMiddleware`3.CommandSet`1.Key">
+            <summary>
+            Gets the key that identifies this command set.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.CommandSet`1.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandMiddleware`3.CommandSet`1"/> class.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.CommandSet`1.GetCommandMetadata(System.Type)">
+            <summary>
+            Gets the command metadata from command type attributes.
+            </summary>
+            <param name="commandType">The command type to extract metadata from.</param>
+            <returns>A <see cref="T:SuperSocket.Command.CommandMetadata"/> instance containing the command's metadata.</returns>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.CommandSet`1.SetCommand(SuperSocket.Command.ICommand)">
+            <summary>
+            Sets the command for this command set.
+            </summary>
+            <param name="command">The command to set.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandMiddleware`3.CommandSet`1.Initialize(System.IServiceProvider,SuperSocket.Command.CommandMiddleware{`0,`1,`2}.CommandTypeInfo,SuperSocket.Command.CommandOptions)">
+            <summary>
+            Initializes the command set with the provided dependencies.
+            </summary>
+            <param name="serviceProvider">The service provider for dependency injection.</param>
+            <param name="commandTypeInfo">Information about the command type.</param>
+            <param name="commandOptions">The command options.</param>
+        </member>
+        <member name="T:SuperSocket.Command.CommandOptions">
+            <summary>
+            Represents options for configuring commands in a SuperSocket application.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandOptions.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandOptions"/> class.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandOptions.Assemblies">
+            <summary>
+            Gets or sets the assemblies containing commands.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandOptions.CommandSources">
+            <summary>
+            Gets or sets the list of command sources.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandOptions.GlobalCommandFilterTypes">
+            <summary>
+            Gets the list of global command filter types.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandOptions.RegisterUnknownPackageHandler``1(System.Func{SuperSocket.Server.Abstractions.Session.IAppSession,``0,System.Threading.CancellationToken,System.Threading.Tasks.ValueTask})">
+            <summary>
+            Registers a handler for unknown packages.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package.</typeparam>
+            <param name="unknownPackageHandler">The handler for unknown packages.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandOptions.GetCommandTypes(System.Predicate{System.Type})">
+            <summary>
+            Retrieves command types that match the specified criteria.
+            </summary>
+            <param name="criteria">The criteria to filter command types.</param>
+            <returns>An enumerable collection of command types.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.CommandAssemblyConfig">
+            <summary>
+            Represents a configuration for a command assembly.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.CommandAssemblyConfig.Name">
+            <summary>
+            Gets or sets the name of the assembly.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandAssemblyConfig.GetCommandTypes(System.Predicate{System.Type})">
+            <summary>
+            Retrieves command types from the assembly that match the specified criteria.
+            </summary>
+            <param name="criteria">The criteria to filter command types.</param>
+            <returns>An enumerable collection of command types.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.ActualCommandAssembly">
+            <summary>
+            Represents an actual command assembly.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.ActualCommandAssembly.Assembly">
+            <summary>
+            Gets or sets the assembly containing commands.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.ActualCommandAssembly.GetCommandTypes(System.Predicate{System.Type})">
+            <summary>
+            Retrieves command types from the assembly that match the specified criteria.
+            </summary>
+            <param name="criteria">The criteria to filter command types.</param>
+            <returns>An enumerable collection of command types.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.AssemblyBaseCommandSource">
+            <summary>
+            Represents a base class for retrieving command types from an assembly.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.AssemblyBaseCommandSource.GetCommandTypesFromAssembly(System.Reflection.Assembly)">
+            <summary>
+            Retrieves all exported types from the specified assembly.
+            </summary>
+            <param name="assembly">The assembly to retrieve types from.</param>
+            <returns>An enumerable collection of exported types.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.ActualCommand">
+            <summary>
+            Represents an actual command with a specific type.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Command.ActualCommand.CommandType">
+            <summary>
+            Gets or sets the type of the command.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.ActualCommand.GetCommandTypes(System.Predicate{System.Type})">
+            <summary>
+            Retrieves the command type if it matches the specified criteria.
+            </summary>
+            <param name="criteria">The criteria to filter command types.</param>
+            <returns>An enumerable collection containing the command type if it matches the criteria.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.CommandOptionsExtensions">
+            <summary>
+            Provides extension methods for configuring command options.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandOptionsExtensions.AddCommand``1(SuperSocket.Command.CommandOptions)">
+            <summary>
+            Adds a command to the command options.
+            </summary>
+            <typeparam name="TCommand">The type of the command to add.</typeparam>
+            <param name="commandOptions">The command options to configure.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandOptionsExtensions.AddCommand(SuperSocket.Command.CommandOptions,System.Type)">
+            <summary>
+            Adds a command to the command options.
+            </summary>
+            <param name="commandOptions">The command options to configure.</param>
+            <param name="commandType">The type of the command to add.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandOptionsExtensions.AddCommandAssembly(SuperSocket.Command.CommandOptions,System.Reflection.Assembly)">
+            <summary>
+            Adds a command assembly to the command options.
+            </summary>
+            <param name="commandOptions">The command options to configure.</param>
+            <param name="commandAssembly">The assembly containing commands.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandOptionsExtensions.AddGlobalCommandFilter``1(SuperSocket.Command.CommandOptions)">
+            <summary>
+            Adds a global command filter to the command options.
+            </summary>
+            <typeparam name="TCommandFilter">The type of the command filter to add.</typeparam>
+            <param name="commandOptions">The command options to configure.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandOptionsExtensions.AddGlobalCommandFilter(SuperSocket.Command.CommandOptions,System.Type)">
+            <summary>
+            Adds a global command filter to the command options.
+            </summary>
+            <param name="commandOptions">The command options to configure.</param>
+            <param name="commandFilterType">The type of the command filter to add.</param>
+            <exception cref="T:System.Exception">Thrown if the command filter type does not inherit from <see cref="T:SuperSocket.Command.CommandFilterBaseAttribute"/>.</exception>
+        </member>
+        <member name="T:SuperSocket.Command.CommandWrap`4">
+            <summary>
+            Represents a wrapper for a command, allowing additional functionality or dependency injection.
+            </summary>
+            <typeparam name="TAppSession">The type of the application session.</typeparam>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+            <typeparam name="IPackageInterface">The interface implemented by the package.</typeparam>
+            <typeparam name="TCommand">The type of the wrapped command.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Command.CommandWrap`4.InnerCommand">
+            <summary>
+            Gets the inner command wrapped by this instance.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.CommandWrap`4.#ctor(`3)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandWrap`4"/> class with the specified command.
+            </summary>
+            <param name="command">The command to wrap.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandWrap`4.#ctor(System.IServiceProvider)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.CommandWrap`4"/> class using the specified service provider.
+            </summary>
+            <param name="serviceProvider">The service provider for dependency injection.</param>
+        </member>
+        <member name="M:SuperSocket.Command.CommandWrap`4.Execute(`0,`1)">
+            <summary>
+            Executes the wrapped command with the specified session and package.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="package">The package information.</param>
+        </member>
+        <member name="T:SuperSocket.Command.AsyncCommandWrap`4">
+            <summary>
+            Represents a wrapper for an asynchronous command, allowing additional functionality or dependency injection.
+            </summary>
+            <typeparam name="TAppSession">The type of the application session.</typeparam>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+            <typeparam name="IPackageInterface">The interface implemented by the package.</typeparam>
+            <typeparam name="TAsyncCommand">The type of the wrapped asynchronous command.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Command.AsyncCommandWrap`4.InnerCommand">
+            <summary>
+            Gets the inner asynchronous command wrapped by this instance.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.AsyncCommandWrap`4.#ctor(`3)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.AsyncCommandWrap`4"/> class with the specified asynchronous command.
+            </summary>
+            <param name="command">The asynchronous command to wrap.</param>
+        </member>
+        <member name="M:SuperSocket.Command.AsyncCommandWrap`4.#ctor(System.IServiceProvider)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.AsyncCommandWrap`4"/> class using the specified service provider.
+            </summary>
+            <param name="serviceProvider">The service provider for dependency injection.</param>
+        </member>
+        <member name="M:SuperSocket.Command.AsyncCommandWrap`4.ExecuteAsync(`0,`1,System.Threading.CancellationToken)">
+            <summary>
+            Asynchronously executes the wrapped command with the specified session and package.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="package">The package information.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous execution operation.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.ICommand">
+            <summary>
+            Represents a base interface for commands.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Command.ICommand`1">
+            <summary>
+            Represents a command that operates on a specific package type.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="T:SuperSocket.Command.ICommand`2">
+            <summary>
+            Represents a command that operates on a specific session and package type.
+            </summary>
+            <typeparam name="TAppSession">The type of the application session.</typeparam>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="M:SuperSocket.Command.ICommand`2.Execute(`0,`1)">
+            <summary>
+            Executes the command with the specified session and package.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="package">The package information.</param>
+        </member>
+        <member name="T:SuperSocket.Command.IAsyncCommand`1">
+            <summary>
+            Represents an asynchronous command that operates on a specific package type.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="T:SuperSocket.Command.IAsyncCommand`2">
+            <summary>
+            Represents an asynchronous command that operates on a specific session and package type.
+            </summary>
+            <typeparam name="TAppSession">The type of the application session.</typeparam>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="M:SuperSocket.Command.IAsyncCommand`2.ExecuteAsync(`0,`1,System.Threading.CancellationToken)">
+            <summary>
+            Asynchronously executes the command with the specified session and package.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="package">The package information.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous execution operation.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.ICommandSource">
+            <summary>
+            Defines a source for retrieving command types based on specified criteria.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.ICommandSource.GetCommandTypes(System.Predicate{System.Type})">
+            <summary>
+            Retrieves a collection of command types that match the specified criteria.
+            </summary>
+            <param name="criteria">The criteria to filter command types.</param>
+            <returns>An enumerable collection of command types that match the criteria.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.IPackageMapper`2">
+            <summary>
+            Defines a method for mapping one package type to another.
+            </summary>
+            <typeparam name="PackageFrom">The type of the source package.</typeparam>
+            <typeparam name="PackageTo">The type of the target package.</typeparam>
+        </member>
+        <member name="M:SuperSocket.Command.IPackageMapper`2.Map(`0)">
+            <summary>
+            Maps a package of type <typeparamref name="PackageFrom"/> to a package of type <typeparamref name="PackageTo"/>.
+            </summary>
+            <param name="package">The source package to map.</param>
+            <returns>The mapped package of type <typeparamref name="PackageTo"/>.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.JsonCommand`1">
+            <summary>
+            Represents a base class for handling JSON-based commands in a SuperSocket application.
+            </summary>
+            <typeparam name="TJsonObject">The type of the JSON object to deserialize.</typeparam>
+        </member>
+        <member name="T:SuperSocket.Command.JsonCommand`2">
+            <summary>
+            Represents a base class for handling JSON-based commands with a specific session type.
+            </summary>
+            <typeparam name="TAppSession">The type of the application session.</typeparam>
+            <typeparam name="TJsonObject">The type of the JSON object to deserialize.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Command.JsonCommand`2.JsonSerializerOptions">
+            <summary>
+            Gets the options for JSON serialization and deserialization.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.JsonCommand`2.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.JsonCommand`2"/> class.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.JsonCommand`2.Execute(`0,SuperSocket.ProtoBase.IStringPackage)">
+            <summary>
+            Executes the command with the specified session and package.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="package">The string package containing the JSON content.</param>
+        </member>
+        <member name="M:SuperSocket.Command.JsonCommand`2.ExecuteJson(`0,`1)">
+            <summary>
+            Executes the command with the deserialized JSON object.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="jsonObject">The deserialized JSON object.</param>
+        </member>
+        <member name="M:SuperSocket.Command.JsonCommand`2.Deserialize(System.String)">
+            <summary>
+            Deserializes the JSON content into an object of type <typeparamref name="TJsonObject"/>.
+            </summary>
+            <param name="content">The JSON content to deserialize.</param>
+            <returns>The deserialized JSON object.</returns>
+        </member>
+        <member name="T:SuperSocket.Command.JsonAsyncCommand`1">
+            <summary>
+            Represents a base class for handling JSON-based asynchronous commands in a SuperSocket application.
+            </summary>
+            <typeparam name="TJsonObject">The type of the JSON object to deserialize.</typeparam>
+        </member>
+        <member name="T:SuperSocket.Command.JsonAsyncCommand`2">
+            <summary>
+            Represents a base class for handling JSON-based asynchronous commands with a specific session type.
+            </summary>
+            <typeparam name="TAppSession">The type of the application session.</typeparam>
+            <typeparam name="TJsonObject">The type of the JSON object to deserialize.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Command.JsonAsyncCommand`2.JsonSerializerOptions">
+            <summary>
+            Gets the options for JSON serialization and deserialization.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.JsonAsyncCommand`2.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Command.JsonAsyncCommand`2"/> class.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Command.JsonAsyncCommand`2.ExecuteAsync(`0,SuperSocket.ProtoBase.IStringPackage,System.Threading.CancellationToken)">
+            <summary>
+            Asynchronously executes the command with the specified session and package.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="package">The string package containing the JSON content.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous execution operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Command.JsonAsyncCommand`2.Deserialize(System.String)">
+            <summary>
+            Deserializes the JSON content into an object of type <typeparamref name="TJsonObject"/>.
+            </summary>
+            <param name="content">The JSON content to deserialize.</param>
+            <returns>The deserialized JSON object.</returns>
+        </member>
+        <member name="M:SuperSocket.Command.JsonAsyncCommand`2.ExecuteJsonAsync(`0,`1,System.Threading.CancellationToken)">
+            <summary>
+            Asynchronously executes the command with the deserialized JSON object.
+            </summary>
+            <param name="session">The application session.</param>
+            <param name="jsonObject">The deserialized JSON object.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous execution operation.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.CommandMiddlewareExtensions">
+            <summary>
+            Provides extension methods for configuring and using command middleware in a SuperSocket application.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.CommandMiddlewareExtensions.GetKeyType``1">
+            <summary>
+            Gets the key type from the specified package type.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package.</typeparam>
+            <returns>The key type of the package.</returns>
+            <exception cref="T:System.Exception">Thrown if the package type does not implement <see cref="T:SuperSocket.ProtoBase.IKeyedPackageInfo`1"/>.</exception>
+        </member>
+        <member name="M:SuperSocket.Server.CommandMiddlewareExtensions.ConfigureCommand(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder)">
+            <summary>
+            Configures command options for the SuperSocket host builder.
+            </summary>
+            <param name="builder">The SuperSocket host builder.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.CommandMiddlewareExtensions.UseCommand``1(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``0})">
+            <summary>
+            Adds command middleware to the SuperSocket host builder.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package.</typeparam>
+            <param name="builder">The SuperSocket host builder.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.CommandMiddlewareExtensions.UseCommand``1(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``0},System.Action{SuperSocket.Command.CommandOptions})">
+            <summary>
+            Adds command middleware to the SuperSocket host builder with a configurator.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package.</typeparam>
+            <param name="builder">The SuperSocket host builder.</param>
+            <param name="configurator">The configurator for command options.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.CommandMiddlewareExtensions.UseCommand``2(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``1},System.Action{SuperSocket.Command.CommandOptions},System.Collections.Generic.IEqualityComparer{``0})">
+            <summary>
+            Adds command middleware to the SuperSocket host builder with a configurator and a key comparer.
+            </summary>
+            <typeparam name="TKey">The type of the command key.</typeparam>
+            <typeparam name="TPackageInfo">The type of the package.</typeparam>
+            <param name="builder">The SuperSocket host builder.</param>
+            <param name="configurator">The configurator for command options.</param>
+            <param name="comparer">The comparer for command keys.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.CommandMiddlewareExtensions.UseCommand``2(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder)">
+            <summary>
+            Adds command middleware to the SuperSocket host builder with a specific key type.
+            </summary>
+            <typeparam name="TKey">The type of the command key.</typeparam>
+            <typeparam name="TPackageInfo">The type of the package.</typeparam>
+            <param name="builder">The SuperSocket host builder.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.CommandMiddlewareExtensions.UseCommand``2(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder,System.Action{SuperSocket.Command.CommandOptions})">
+            <summary>
+            Adds command middleware to the SuperSocket host builder with a specific key type and a configurator.
+            </summary>
+            <typeparam name="TKey">The type of the command key.</typeparam>
+            <typeparam name="TPackageInfo">The type of the package.</typeparam>
+            <param name="builder">The SuperSocket host builder.</param>
+            <param name="configurator">The configurator for command options.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.CommandMiddlewareExtensions.UseCommand``2(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder,System.Action{SuperSocket.Command.CommandOptions},System.Collections.Generic.IEqualityComparer{``0})">
+            <summary>
+            Adds command middleware to the SuperSocket host builder with a specific key type, a configurator, and a key comparer.
+            </summary>
+            <typeparam name="TKey">The type of the command key.</typeparam>
+            <typeparam name="TPackageInfo">The type of the package.</typeparam>
+            <param name="builder">The SuperSocket host builder.</param>
+            <param name="configurator">The configurator for command options.</param>
+            <param name="comparer">The comparer for command keys.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+    </members>
+</doc>

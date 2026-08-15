@@ -1,0 +1,1809 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SuperSocket.Server</name>
+    </assembly>
+    <members>
+        <member name="T:SuperSocket.Server.AppSession">
+            <summary>
+            Represents an application session that manages connection, state, and events.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.AppSession.Connection">
+            <summary>
+            Gets the connection associated with the session.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.AppSession"/> class.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.SuperSocket#Server#Abstractions#Session#IAppSession#Initialize(SuperSocket.Server.Abstractions.IServerInfo,SuperSocket.Connection.IConnection)">
+            <summary>
+            Initializes the session with the specified server and connection.
+            </summary>
+            <param name="server">The server information.</param>
+            <param name="connection">The connection associated with the session.</param>
+        </member>
+        <member name="P:SuperSocket.Server.AppSession.SessionID">
+            <summary>
+            Gets the session ID.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.AppSession.StartTime">
+            <summary>
+            Gets the start time of the session.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.AppSession.State">
+            <summary>
+            Gets the current state of the session.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.AppSession.Server">
+            <summary>
+            Gets the server information associated with the session.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.AppSession.DataContext">
+            <summary>
+            Gets or sets the data context for the session.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.AppSession.RemoteEndPoint">
+            <summary>
+            Gets the remote endpoint of the session.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.AppSession.LocalEndPoint">
+            <summary>
+            Gets the local endpoint of the session.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.AppSession.LastActiveTime">
+            <summary>
+            Gets the last active time of the session.
+            </summary>
+        </member>
+        <member name="E:SuperSocket.Server.AppSession.Connected">
+            <summary>
+            Occurs when the session is connected.
+            </summary>
+        </member>
+        <member name="E:SuperSocket.Server.AppSession.Closed">
+            <summary>
+            Occurs when the session is closed.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.AppSession.Item(System.Object)">
+            <summary>
+            Gets or sets session-specific data by key.
+            </summary>
+            <param name="name">The key of the data.</param>
+            <returns>The value associated with the key.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.OnSessionClosedAsync(SuperSocket.Connection.CloseEventArgs)">
+            <summary>
+            Called when the session is closed.
+            </summary>
+            <param name="e">The close event arguments containing the reason for closing.</param>
+            <returns>A task representing the async operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.FireSessionClosedAsync(SuperSocket.Connection.CloseEventArgs)">
+            <summary>
+            Fires the session closed event.
+            </summary>
+            <param name="e">The close event arguments containing the reason for closing.</param>
+            <returns>A task representing the async operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.OnSessionConnectedAsync">
+            <summary>
+            Called when the session is connected.
+            </summary>
+            <returns>A task representing the async operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.FireSessionConnectedAsync">
+            <summary>
+            Fires the session connected event.
+            </summary>
+            <returns>A task representing the async operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.SuperSocket#Server#Abstractions#Session#IAppSession#SendAsync(System.ReadOnlyMemory{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends binary data to the client asynchronously.
+            </summary>
+            <param name="data">The binary data to send.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A task representing the async send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.SuperSocket#Server#Abstractions#Session#IAppSession#SendAsync(System.Buffers.ReadOnlySequence{System.Byte},System.Threading.CancellationToken)">
+            <summary>
+            Sends readonly sequence data to the client asynchronously.
+            </summary>
+            <param name="data">The binary data to send.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A task representing the async send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.SuperSocket#Server#Abstractions#Session#IAppSession#SendAsync``1(SuperSocket.ProtoBase.IPackageEncoder{``0},``0,System.Threading.CancellationToken)">
+            <summary>
+            Sends a package to the client asynchronously.
+            </summary>
+            <typeparam name="TPackage">The type of the package.</typeparam>
+            <param name="packageEncoder">The encoder used to encode the package.</param>
+            <param name="package">The package to send.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A task representing the async send operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.SuperSocket#Server#Abstractions#Session#IAppSession#Reset">
+            <summary>
+            Resets the session state. Called by the server when recycling the session.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.Reset">
+            <summary>
+            Called when the session is reset. Derived classes can override this method to perform additional cleanup.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.ClearEvent``1(``0@)">
+            <summary>
+            Clears all handlers from an event.
+            </summary>
+            <typeparam name="TEventHandler">The type of the event handler.</typeparam>
+            <param name="sessionEvent">The event to clear.</param>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.CloseAsync">
+            <summary>
+            Closes the session asynchronously.
+            </summary>
+            <returns>A task that represents the asynchronous close operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.CloseAsync(SuperSocket.Connection.CloseReason)">
+            <summary>
+            Closes the session asynchronously with the specified reason.
+            </summary>
+            <param name="reason">The reason for closing the session.</param>
+            <returns>A task that represents the asynchronous close operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.GetLogger">
+            <summary>
+            Gets the logger associated with the session from the server.
+            </summary>
+            <returns>The logger instance.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.Microsoft#Extensions#Logging#ILogger#Log``1(Microsoft.Extensions.Logging.LogLevel,Microsoft.Extensions.Logging.EventId,``0,System.Exception,System.Func{``0,System.Exception,System.String})">
+            <summary>
+            Writes a log entry with the specified log level, event ID, state, exception, and formatter.
+            Prefixes log entries with the session ID.
+            </summary>
+            <typeparam name="TState">The type of the object to be written.</typeparam>
+            <param name="logLevel">The level of the log entry.</param>
+            <param name="eventId">The event ID for the log entry.</param>
+            <param name="state">The state to be logged.</param>
+            <param name="exception">The exception related to this entry.</param>
+            <param name="formatter">The function to format the state and exception into a log message.</param>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.Microsoft#Extensions#Logging#ILogger#IsEnabled(Microsoft.Extensions.Logging.LogLevel)">
+            <summary>
+            Checks if the given log level is enabled.
+            </summary>
+            <param name="logLevel">The log level to check.</param>
+            <returns>True if the log level is enabled; otherwise, false.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.AppSession.Microsoft#Extensions#Logging#ILogger#BeginScope``1(``0)">
+            <summary>
+            Begins a logical operation scope.
+            </summary>
+            <typeparam name="TState">The type of the state to begin scope for.</typeparam>
+            <param name="state">The identifier for the scope.</param>
+            <returns>An IDisposable that ends the logical operation scope on dispose.</returns>
+        </member>
+        <member name="P:SuperSocket.Server.AppSession.Logger">
+            <summary>
+            Gets the logger associated with the session.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Server.ClearIdleSessionMiddleware">
+            <summary>
+            Middleware for clearing idle sessions based on their last active time.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.ClearIdleSessionMiddleware.#ctor(System.IServiceProvider,Microsoft.Extensions.Options.IOptions{SuperSocket.Server.Abstractions.ServerOptions},Microsoft.Extensions.Logging.ILoggerFactory)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.ClearIdleSessionMiddleware"/> class.
+            </summary>
+            <param name="serviceProvider">The service provider to resolve dependencies.</param>
+            <param name="serverOptions">The server options containing configuration values.</param>
+            <param name="loggerFactory">The logger factory to create loggers.</param>
+            <exception cref="T:System.Exception">Thrown if the required <see cref="T:SuperSocket.Server.Abstractions.Session.ISessionContainer"/> middleware is not available.</exception>
+        </member>
+        <member name="M:SuperSocket.Server.ClearIdleSessionMiddleware.Start(SuperSocket.Server.Abstractions.IServer)">
+            <summary>
+            Starts the middleware and initializes the timer for clearing idle sessions.
+            </summary>
+            <param name="server">The server instance.</param>
+        </member>
+        <member name="M:SuperSocket.Server.ClearIdleSessionMiddleware.Shutdown(SuperSocket.Server.Abstractions.IServer)">
+            <summary>
+            Shuts down the middleware and disposes of the timer.
+            </summary>
+            <param name="server">The server instance.</param>
+        </member>
+        <member name="T:SuperSocket.Server.ConcurrentPackageHandlingScheduler`1">
+            <summary>
+            A scheduler for handling packages concurrently.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="M:SuperSocket.Server.ConcurrentPackageHandlingScheduler`1.HandlePackage(SuperSocket.Server.Abstractions.Session.IAppSession,`0,System.Threading.CancellationToken)">
+            <summary>
+            Handles a package by scheduling it for concurrent processing.
+            </summary>
+            <param name="session">The session associated with the package.</param>
+            <param name="package">The package to handle.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Connection.ConnectionFactoryBuilder">
+            <summary>
+            Builder for creating connection factories with specified options and initializers.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Connection.ConnectionFactoryBuilder.SocketOptionsSetter">
+            <summary>
+            Gets the action used to configure socket options.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Connection.ConnectionFactoryBuilder.ConnectionStreamInitializersFactory">
+            <summary>
+            Gets the factory for creating connection stream initializers.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.ConnectionFactoryBuilder.#ctor(SuperSocket.Server.Abstractions.Connections.SocketOptionsSetter,SuperSocket.Server.Abstractions.Connections.IConnectionStreamInitializersFactory)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Connection.ConnectionFactoryBuilder"/> class.
+            </summary>
+            <param name="socketOptionsSetter">The setter for configuring socket options.</param>
+            <param name="connectionStreamInitializersFactory">The factory for creating connection stream initializers.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.ConnectionFactoryBuilder.Build(SuperSocket.Server.Abstractions.ListenOptions,SuperSocket.Connection.ConnectionOptions)">
+            <summary>
+            Builds a connection factory using the specified listen and connection options.
+            </summary>
+            <param name="listenOptions">The options for the listener.</param>
+            <param name="connectionOptions">The options for the connection.</param>
+            <returns>A new instance of <see cref="T:SuperSocket.Connection.IConnectionFactory"/>.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Connection.DefaultConnectionStreamInitializersFactory">
+            <summary>
+            Factory for creating default connection stream initializers.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Connection.DefaultConnectionStreamInitializersFactory.CompressionLevel">
+            <summary>
+            Gets the compression level used for the connection streams.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.DefaultConnectionStreamInitializersFactory.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Connection.DefaultConnectionStreamInitializersFactory"/> class with no compression.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.DefaultConnectionStreamInitializersFactory.#ctor(System.IO.Compression.CompressionLevel)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Connection.DefaultConnectionStreamInitializersFactory"/> class with the specified compression level.
+            </summary>
+            <param name="compressionLevel">The compression level to use for the connection streams.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.DefaultConnectionStreamInitializersFactory.Create(SuperSocket.Server.Abstractions.ListenOptions)">
+            <summary>
+            Creates a collection of connection stream initializers based on the specified listen options.
+            </summary>
+            <param name="listenOptions">The options for the listener.</param>
+            <returns>A collection of connection stream initializers.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Connection.GZipStreamInitializer">
+            <summary>
+            Initializes a GZip stream for compressing and decompressing data.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Connection.GZipStreamInitializer.CompressionLevel">
+            <summary>
+            Gets the compression level used for the GZip stream.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.GZipStreamInitializer.InitializeAsync(System.Net.Sockets.Socket,System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+            Initializes the GZip stream asynchronously.
+            </summary>
+            <param name="socket">The socket associated with the connection.</param>
+            <param name="stream">The underlying stream to wrap with GZip compression.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation. The task result contains the initialized GZip stream.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.GZipStreamInitializer.Setup(SuperSocket.Server.Abstractions.ListenOptions)">
+            <summary>
+            Configures the GZip stream initializer with the specified listen options.
+            </summary>
+            <param name="listenOptions">The options for the listener.</param>
+        </member>
+        <member name="T:SuperSocket.Server.Connection.NetworkStreamInitializer">
+            <summary>
+            Initializes a network stream for socket communication.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.NetworkStreamInitializer.Setup(SuperSocket.Server.Abstractions.ListenOptions)">
+            <summary>
+            Configures the network stream initializer with the specified listen options.
+            </summary>
+            <param name="listenOptions">The options for the listener.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.NetworkStreamInitializer.InitializeAsync(System.Net.Sockets.Socket,System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+            Initializes the network stream asynchronously.
+            </summary>
+            <param name="socket">The socket associated with the connection.</param>
+            <param name="stream">The underlying stream (not used in this implementation).</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation. The task result contains the initialized network stream.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Connection.SslStreamInitializer">
+            <summary>
+            Initializes an SSL stream for secure communication.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.SslStreamInitializer.Setup(SuperSocket.Server.Abstractions.ListenOptions)">
+            <summary>
+            Configures the SSL stream initializer with the specified listen options.
+            </summary>
+            <param name="listenOptions">The options for the listener, including authentication settings.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.SslStreamInitializer.InitializeAsync(System.Net.Sockets.Socket,System.IO.Stream,System.Threading.CancellationToken)">
+            <summary>
+            Initializes the SSL stream asynchronously.
+            </summary>
+            <param name="socket">The socket associated with the connection.</param>
+            <param name="stream">The underlying stream to wrap with SSL.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation. The task result contains the initialized SSL stream.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Connection.TcpConnectionFactory">
+            <summary>
+            Factory for creating TCP connections with optional stream initializers and socket options.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.TcpConnectionFactory.#ctor(SuperSocket.Server.Abstractions.ListenOptions,SuperSocket.Connection.ConnectionOptions,System.Action{System.Net.Sockets.Socket},SuperSocket.Server.Abstractions.Connections.IConnectionStreamInitializersFactory)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Connection.TcpConnectionFactory"/> class.
+            </summary>
+            <param name="listenOptions">The options for the listener.</param>
+            <param name="connectionOptions">The options for the connection.</param>
+            <param name="socketOptionsSetter">An action to configure socket options.</param>
+            <param name="connectionStreamInitializersFactory">The factory for creating connection stream initializers.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.TcpConnectionFactory.CreateConnection(System.Object,System.Threading.CancellationToken)">
+            <summary>
+            Creates a new connection asynchronously.
+            </summary>
+            <param name="connection">The connection object, typically a socket.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation. The task result contains the created connection.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Connection.TcpConnectionListener">
+            <summary>
+            Represents a TCP connection listener that accepts and manages incoming connections.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Connection.TcpConnectionListener.ConnectionFactory">
+            <summary>
+            Gets the connection factory used to create connections.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Connection.TcpConnectionListener.Options">
+            <summary>
+            Gets the options for the listener.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.TcpConnectionListener.#ctor(SuperSocket.Server.Abstractions.ListenOptions,SuperSocket.Connection.IConnectionFactory,Microsoft.Extensions.Logging.ILogger)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Connection.TcpConnectionListener"/> class.
+            </summary>
+            <param name="options">The options for the listener.</param>
+            <param name="connectionFactory">The factory for creating connections.</param>
+            <param name="logger">The logger for logging events.</param>
+        </member>
+        <member name="P:SuperSocket.Server.Connection.TcpConnectionListener.IsRunning">
+            <summary>
+            Gets a value indicating whether the listener is running.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.TcpConnectionListener.Start">
+            <summary>
+            Starts the TCP connection listener.
+            </summary>
+            <returns>True if the listener started successfully; otherwise, false.</returns>
+        </member>
+        <member name="E:SuperSocket.Server.Connection.TcpConnectionListener.NewConnectionAccept">
+            <summary>
+            Occurs when a new connection is accepted.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.TcpConnectionListener.StopAsync">
+            <summary>
+            Stops the TCP connection listener asynchronously.
+            </summary>
+            <returns>A task that represents the asynchronous stop operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.TcpConnectionListener.Dispose">
+            <summary>
+            Releases the resources used by the listener.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.TcpConnectionListener.ToString">
+            <summary>
+            Returns a string that represents the current listener.
+            </summary>
+            <returns>A string representation of the listener's options.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Connection.TcpConnectionListenerFactory">
+            <summary>
+            Factory for creating TCP connection listeners.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Connection.TcpConnectionListenerFactory.ConnectionFactoryBuilder">
+            <summary>
+            Gets the connection factory builder used to create connection factories.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.TcpConnectionListenerFactory.#ctor(SuperSocket.Server.Abstractions.Connections.IConnectionFactoryBuilder)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Connection.TcpConnectionListenerFactory"/> class.
+            </summary>
+            <param name="connectionFactoryBuilder">The builder for creating connection factories.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.TcpConnectionListenerFactory.CreateConnectionListener(SuperSocket.Server.Abstractions.ListenOptions,SuperSocket.Connection.ConnectionOptions,Microsoft.Extensions.Logging.ILoggerFactory)">
+            <summary>
+            Creates a new TCP connection listener.
+            </summary>
+            <param name="options">The options for the listener.</param>
+            <param name="connectionOptions">The options for the connection.</param>
+            <param name="loggerFactory">The factory for creating loggers.</param>
+            <returns>A new instance of <see cref="T:SuperSocket.Server.Abstractions.Connections.IConnectionListener"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Connection.TcpConnectionListenerFactory.CreateTcpConnectionFactory(SuperSocket.Server.Abstractions.ListenOptions,SuperSocket.Connection.ConnectionOptions)">
+            <summary>
+            Creates a TCP connection factory using the specified options.
+            </summary>
+            <param name="options">The options for the listener.</param>
+            <param name="connectionOptions">The options for the connection.</param>
+            <returns>A new instance of <see cref="T:SuperSocket.Connection.IConnectionFactory"/>.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.DefaultSessionFactory">
+            <summary>
+            Default implementation of the session factory.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.DefaultSessionFactory.SessionType">
+            <summary>
+            Gets the type of the session created by this factory.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.DefaultSessionFactory.Create">
+            <summary>
+            Creates a new instance of <see cref="T:SuperSocket.Server.Abstractions.Session.IAppSession"/>.
+            </summary>
+            <returns>A new instance of <see cref="T:SuperSocket.Server.AppSession"/>.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.GenericSessionFactory`1">
+            <summary>
+            A generic session factory for creating instances of a specific session type.
+            </summary>
+            <typeparam name="TSession">The type of session to create.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Server.GenericSessionFactory`1.SessionType">
+            <summary>
+            Gets the type of session created by this factory.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.GenericSessionFactory`1.ServiceProvider">
+            <summary>
+            Gets the service provider used to create session instances.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.GenericSessionFactory`1.#ctor(System.IServiceProvider)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.GenericSessionFactory`1"/> class.
+            </summary>
+            <param name="serviceProvider">The service provider used to create session instances.</param>
+        </member>
+        <member name="M:SuperSocket.Server.GenericSessionFactory`1.Create">
+            <summary>
+            Creates a new session instance.
+            </summary>
+            <returns>A new instance of the session.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Host.HostBuilderAdapter`1">
+            <summary>
+            Provides an adapter for customizing and extending the behavior of a host builder.
+            </summary>
+            <typeparam name="THostBuilder">The type of the host builder being adapted.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Server.Host.HostBuilderAdapter`1.HostBuilder">
+            <summary>
+            Gets the underlying host builder being adapted.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderAdapter`1.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Host.HostBuilderAdapter`1"/> class with default settings.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderAdapter`1.#ctor(System.String[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Host.HostBuilderAdapter`1"/> class with the specified arguments.
+            </summary>
+            <param name="args">The command-line arguments for the host builder.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderAdapter`1.#ctor(Microsoft.Extensions.Hosting.IHostBuilder)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Host.HostBuilderAdapter`1"/> class with the specified host builder.
+            </summary>
+            <param name="hostBuilder">The host builder to adapt.</param>
+        </member>
+        <member name="P:SuperSocket.Server.Host.HostBuilderAdapter`1.Properties">
+            <summary>
+            Gets the properties associated with the host builder.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderAdapter`1.Build">
+            <summary>
+            Builds the host.
+            </summary>
+            <returns>The built host.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderAdapter`1.ConfigureAppConfiguration(System.Action{Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.Configuration.IConfigurationBuilder})">
+            <summary>
+            Configures the application configuration for the host.
+            </summary>
+            <param name="configureDelegate">The delegate to configure the application configuration.</param>
+            <returns>The adapted host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderAdapter`1.ConfigureContainer``1(System.Action{Microsoft.Extensions.Hosting.HostBuilderContext,``0})">
+            <summary>
+            Configures the container for the host.
+            </summary>
+            <typeparam name="TContainerBuilder">The type of the container builder.</typeparam>
+            <param name="configureDelegate">The delegate to configure the container.</param>
+            <returns>The adapted host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderAdapter`1.ConfigureHostConfiguration(System.Action{Microsoft.Extensions.Configuration.IConfigurationBuilder})">
+            <summary>
+            Configures the host configuration.
+            </summary>
+            <param name="configureDelegate">The delegate to configure the host configuration.</param>
+            <returns>The adapted host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderAdapter`1.ConfigureServices(System.Action{Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.DependencyInjection.IServiceCollection})">
+            <summary>
+            Configures the services for the host.
+            </summary>
+            <param name="configureDelegate">The delegate to configure the services.</param>
+            <returns>The adapted host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderAdapter`1.UseServiceProviderFactory``1(Microsoft.Extensions.DependencyInjection.IServiceProviderFactory{``0})">
+            <summary>
+            Uses the specified service provider factory for the host.
+            </summary>
+            <typeparam name="TContainerBuilder">The type of the container builder.</typeparam>
+            <param name="factory">The service provider factory to use.</param>
+            <returns>The adapted host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderAdapter`1.UseServiceProviderFactory``1(System.Func{Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.DependencyInjection.IServiceProviderFactory{``0}})">
+            <summary>
+            Uses the specified service provider factory for the host.
+            </summary>
+            <typeparam name="TContainerBuilder">The type of the container builder.</typeparam>
+            <param name="factory">A function to create the service provider factory.</param>
+            <returns>The adapted host builder.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Host.HostBuilderExtensions">
+            <summary>
+            Provides extension methods for configuring and building SuperSocket hosts.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.AsSuperSocketHostBuilder``1(Microsoft.Extensions.Hosting.IHostBuilder)">
+            <summary>
+            Converts an <see cref="T:Microsoft.Extensions.Hosting.IHostBuilder"/> to an <see cref="T:SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder`1"/>.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the host.</typeparam>
+            <param name="hostBuilder">The host builder to convert.</param>
+            <returns>An instance of <see cref="T:SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder`1"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.AsSuperSocketHostBuilder``2(Microsoft.Extensions.Hosting.IHostBuilder)">
+            <summary>
+            Converts an <see cref="T:Microsoft.Extensions.Hosting.IHostBuilder"/> to an <see cref="T:SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder`1"/> with a specified pipeline filter.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the host.</typeparam>
+            <typeparam name="TPipelineFilter">The type of the pipeline filter.</typeparam>
+            <param name="hostBuilder">The host builder to convert.</param>
+            <returns>An instance of <see cref="T:SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder`1"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.UsePipelineFilterFactory``1(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``0},System.Func{SuperSocket.ProtoBase.IPipelineFilter{``0}})">
+            <summary>
+            Configures a pipeline filter factory for the host builder.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the host.</typeparam>
+            <param name="hostBuilder">The host builder to configure.</param>
+            <param name="filterFactory">The factory function to create pipeline filters.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.UseClearIdleSession``1(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``0})">
+            <summary>
+            Configures the host builder to use middleware for clearing idle sessions.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the host.</typeparam>
+            <param name="hostBuilder">The host builder to configure.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.UseSessionHandler``1(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``0},System.Func{SuperSocket.Server.Abstractions.Session.IAppSession,System.Threading.Tasks.ValueTask},System.Func{SuperSocket.Server.Abstractions.Session.IAppSession,SuperSocket.Connection.CloseEventArgs,System.Threading.Tasks.ValueTask})">
+            <summary>
+            Configures session handlers for the host builder.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the host.</typeparam>
+            <param name="hostBuilder">The host builder to configure.</param>
+            <param name="onConnected">The handler for session connected events.</param>
+            <param name="onClosed">The handler for session closed events.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.ConfigureSuperSocket``1(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``0},System.Action{SuperSocket.Server.Abstractions.ServerOptions})">
+            <summary>
+            Configures SuperSocket server options for the host builder.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the host.</typeparam>
+            <param name="hostBuilder">The host builder to configure.</param>
+            <param name="configurator">The action to configure server options.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.ConfigureSocketOptions``1(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``0},System.Action{System.Net.Sockets.Socket})">
+            <summary>
+            Configures socket options for the host builder.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the host.</typeparam>
+            <param name="hostBuilder">The host builder to configure.</param>
+            <param name="socketOptionsSetter">The action to configure socket options.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.BuildAsServer(Microsoft.Extensions.Hosting.IHostBuilder)">
+            <summary>
+            Builds the host as a server.
+            </summary>
+            <param name="hostBuilder">The host builder to build.</param>
+            <returns>The built server.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.AsServer(Microsoft.Extensions.Hosting.IHost)">
+            <summary>
+            Converts an <see cref="T:Microsoft.Extensions.Hosting.IHost"/> to an <see cref="T:SuperSocket.Server.Abstractions.IServer"/>.
+            </summary>
+            <param name="host">The host to convert.</param>
+            <returns>The server instance.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.ConfigureErrorHandler``1(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``0},System.Func{SuperSocket.Server.Abstractions.Session.IAppSession,SuperSocket.PackageHandlingException{``0},System.Threading.Tasks.ValueTask{System.Boolean}})">
+            <summary>
+            Configures an error handler for the host builder.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the host.</typeparam>
+            <param name="hostBuilder">The host builder to configure.</param>
+            <param name="errorHandler">The error handler function.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.UsePackageHandler``1(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``0},System.Func{SuperSocket.Server.Abstractions.Session.IAppSession,``0,System.Threading.Tasks.ValueTask},System.Func{SuperSocket.Server.Abstractions.Session.IAppSession,SuperSocket.PackageHandlingException{``0},System.Threading.Tasks.ValueTask{System.Boolean}})">
+            <summary>
+            Configures a package handler for the host builder.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the host.</typeparam>
+            <param name="hostBuilder">The host builder to configure.</param>
+            <param name="packageHandler">The package handler function.</param>
+            <param name="errorHandler">The error handler function.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.AsMultipleServerHostBuilder(Microsoft.Extensions.Hosting.IHostBuilder)">
+            <summary>
+            Converts an <see cref="T:Microsoft.Extensions.Hosting.IHostBuilder"/> to a <see cref="T:SuperSocket.Server.Host.MultipleServerHostBuilder"/>.
+            </summary>
+            <param name="hostBuilder">The host builder to convert.</param>
+            <returns>An instance of <see cref="T:SuperSocket.Server.Host.MultipleServerHostBuilder"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.AsSuperSocketWebApplicationBuilder(Microsoft.Extensions.Hosting.IHostApplicationBuilder,System.Action{SuperSocket.Server.Host.MultipleServerHostBuilder})">
+            <summary>
+            Converts an <see cref="T:Microsoft.Extensions.Hosting.IHostApplicationBuilder"/> to a <see cref="T:SuperSocket.Server.Host.SuperSocketApplicationBuilder"/>.
+            </summary>
+            <param name="hostApplicationBuilder">The host application builder to convert.</param>
+            <param name="configureServerHostBuilder">The action to configure the server host builder.</param>
+            <returns>An instance of <see cref="T:SuperSocket.Server.Host.SuperSocketApplicationBuilder"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.AsSuperSocketApplicationBuilder(Microsoft.Extensions.Hosting.IHostApplicationBuilder,System.Action{SuperSocket.Server.Host.MultipleServerHostBuilder})">
+            <summary>
+            Converts an <see cref="T:Microsoft.Extensions.Hosting.IHostApplicationBuilder"/> to a <see cref="T:SuperSocket.Server.Host.SuperSocketApplicationBuilder"/>.
+            </summary>
+            <param name="hostApplicationBuilder">The host application builder to convert.</param>
+            <param name="configureServerHostBuilder">The action to configure the server host builder.</param>
+            <returns>An instance of <see cref="T:SuperSocket.Server.Host.SuperSocketApplicationBuilder"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.AsMinimalApiHostBuilder(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder)">
+            <summary>
+            Converts an <see cref="T:SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder"/> to a <see cref="T:SuperSocket.Server.Abstractions.Host.IMinimalApiHostBuilder"/>.
+            </summary>
+            <param name="hostBuilder">The host builder to convert.</param>
+            <returns>An instance of <see cref="T:SuperSocket.Server.Abstractions.Host.IMinimalApiHostBuilder"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.HostBuilderExtensions.UseGZip(SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder)">
+            <summary>
+            Configures the host builder to use GZip compression.
+            </summary>
+            <param name="hostBuilder">The host builder to configure.</param>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Host.IServerHostBuilderAdapter">
+            <summary>
+            Defines methods to adapt and configure server host builders.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.IServerHostBuilderAdapter.ConfigureServer(Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Configures the server with the specified host builder context and services.
+            </summary>
+            <param name="context">The context of the host builder.</param>
+            <param name="hostServices">The collection of services for the host.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.IServerHostBuilderAdapter.ConfigureServiceProvider(System.IServiceProvider)">
+            <summary>
+            Configures the service provider for the host.
+            </summary>
+            <param name="hostServiceProvider">The service provider for the host.</param>
+        </member>
+        <member name="T:SuperSocket.Server.Host.MultipleServerHostBuilder">
+            <summary>
+            Provides a builder for configuring and managing multiple SuperSocket servers.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Host.MultipleServerHostBuilder"/> class with default settings.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.#ctor(System.String[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Host.MultipleServerHostBuilder"/> class with the specified arguments.
+            </summary>
+            <param name="args">The command-line arguments for the host builder.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.#ctor(Microsoft.Extensions.Hosting.IHostBuilder)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Host.MultipleServerHostBuilder"/> class with the specified host builder.
+            </summary>
+            <param name="hostBuilder">The host builder to adapt.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.ConfigureServers(Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Configures the servers with the specified host builder context and services.
+            </summary>
+            <param name="context">The context of the host builder.</param>
+            <param name="hostServices">The collection of services for the host.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.Build">
+            <summary>
+            Builds the host and configures multiple servers.
+            </summary>
+            <returns>The built host.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.AdaptMultipleServerHost(System.IServiceProvider)">
+            <summary>
+            Adapts the services to support multiple servers.
+            </summary>
+            <param name="services">The service provider for the host.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.Create">
+            <summary>
+            Creates a new instance of the <see cref="T:SuperSocket.Server.Host.MultipleServerHostBuilder"/> class.
+            </summary>
+            <returns>A new instance of <see cref="T:SuperSocket.Server.Host.MultipleServerHostBuilder"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.Create(System.String[])">
+            <summary>
+            Creates a new instance of the <see cref="T:SuperSocket.Server.Host.MultipleServerHostBuilder"/> class with the specified arguments.
+            </summary>
+            <param name="args">The command-line arguments for the host builder.</param>
+            <returns>A new instance of <see cref="T:SuperSocket.Server.Host.MultipleServerHostBuilder"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.AddServer``1(System.Action{SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``0}})">
+            <summary>
+            Adds a server to the host builder with the specified configuration.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the server.</typeparam>
+            <param name="hostBuilderDelegate">The action to configure the server host builder.</param>
+            <returns>The updated host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.AddServer``2(System.Action{SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder{``0}})">
+            <summary>
+            Adds a server to the host builder with the specified configuration and pipeline filter.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the server.</typeparam>
+            <typeparam name="TPipelineFilter">The type of the pipeline filter.</typeparam>
+            <param name="hostBuilderDelegate">The action to configure the server host builder.</param>
+            <returns>The updated host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.AddServer(SuperSocket.Server.Host.IServerHostBuilderAdapter)">
+            <summary>
+            Adds a server to the host builder using the specified server host builder adapter.
+            </summary>
+            <param name="hostBuilderAdapter">The server host builder adapter to add.</param>
+            <returns>The updated host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.AddServer``3(System.Action{SuperSocket.Server.Host.SuperSocketHostBuilder{``1}})">
+            <summary>
+            Adds a server to the host builder with the specified service, package, and pipeline filter types.
+            </summary>
+            <typeparam name="TSuperSocketService">The type of the SuperSocket service.</typeparam>
+            <typeparam name="TReceivePackage">The type of the package received by the server.</typeparam>
+            <typeparam name="TPipelineFilter">The type of the pipeline filter.</typeparam>
+            <param name="hostBuilderDelegate">The action to configure the server host builder.</param>
+            <returns>The updated host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.AsMinimalApiHostBuilder">
+            <summary>
+            Converts the host builder to a minimal API host builder.
+            </summary>
+            <returns>An instance of <see cref="T:SuperSocket.Server.Abstractions.Host.IMinimalApiHostBuilder"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.MultipleServerHostBuilder.SuperSocket#Server#Abstractions#Host#IMinimalApiHostBuilder#ConfigureHostBuilder">
+            <summary>
+            Configures the host builder for minimal API support.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Server.Host.ServerHostBuilderAdapter`1">
+            <summary>
+            Represents a server host builder adapter for SuperSocket.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the received package.</typeparam>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.#ctor(Microsoft.Extensions.Hosting.IHostBuilder)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Host.ServerHostBuilderAdapter`1"/> class.
+            </summary>
+            <param name="hostBuilder">The host builder to adapt.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.SuperSocket#Server#Host#IServerHostBuilderAdapter#ConfigureServer(Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Configures the server with the specified host builder context and service collection.
+            </summary>
+            <param name="context">The host builder context.</param>
+            <param name="hostServices">The service collection for the host.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.ConfigureServer(Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Configures the server with the specified host builder context and service collection.
+            </summary>
+            <param name="context">The host builder context.</param>
+            <param name="hostServices">The service collection for the host.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.ConfigureContainerBuilder(Microsoft.Extensions.Hosting.HostBuilderContext,System.Object)">
+            <summary>
+            Configures the container builder with the specified context and container builder.
+            </summary>
+            <param name="context">The host builder context.</param>
+            <param name="containerBuilder">The container builder to configure.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.CopyGlobalServices(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Copies global services from the host services to the specified service collection.
+            </summary>
+            <param name="hostServices">The host services.</param>
+            <param name="services">The target service collection.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.CopyGlobalServiceDescriptor(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.DependencyInjection.ServiceDescriptor)">
+            <summary>
+            Copies a global service descriptor from the host services to the specified service collection.
+            </summary>
+            <param name="hostServices">The host services.</param>
+            <param name="services">The target service collection.</param>
+            <param name="sd">The service descriptor to copy.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.GetServiceFromHost(System.Func{System.IServiceProvider,System.Object})">
+            <summary>
+            Gets a service from the host using the specified factory.
+            </summary>
+            <param name="factory">The factory to create the service.</param>
+            <returns>The created service.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.SuperSocket#Server#Host#IServerHostBuilderAdapter#ConfigureServiceProvider(System.IServiceProvider)">
+            <summary>
+            Configures the service provider with the specified host service provider.
+            </summary>
+            <param name="hostServiceProvider">The host service provider.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.RegisterHostedService``1">
+            <summary>
+            Registers a hosted service of the specified type.
+            </summary>
+            <typeparam name="THostedService">The type of the hosted service.</typeparam>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.RegisterHostedService``1(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers a hosted service of the specified type in the provided service collection.
+            </summary>
+            <typeparam name="THostedService">The type of the hosted service.</typeparam>
+            <param name="servicesInHost">The service collection to register the hosted service in.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.RegisterDefaultHostedService(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers the default hosted service in the provided service collection.
+            </summary>
+            <param name="servicesInHost">The service collection to register the default hosted service in.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.GetHostedService``1">
+            <summary>
+            Gets the hosted service of the specified type.
+            </summary>
+            <typeparam name="THostedService">The type of the hosted service.</typeparam>
+            <returns>The hosted service.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.UseHostedService``1">
+            <summary>
+            Configures the host builder to use a hosted service of the specified type.
+            </summary>
+            <typeparam name="THostedService">The type of the hosted service.</typeparam>
+            <returns>The current instance of <see cref="T:SuperSocket.Server.Abstractions.Host.ISuperSocketHostBuilder`1"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.Build">
+            <summary>
+            Builds the host. This method is not supported.
+            </summary>
+            <returns>Throws a <see cref="T:System.NotSupportedException"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.ConfigureContainer``1(System.Action{Microsoft.Extensions.Hosting.HostBuilderContext,``0})">
+            <summary>
+            Configures the container with the specified delegate.
+            </summary>
+            <typeparam name="TContainerBuilder">The type of the container builder.</typeparam>
+            <param name="configureDelegate">The delegate to configure the container.</param>
+            <returns>The current instance of <see cref="T:SuperSocket.Server.Host.SuperSocketHostBuilder`1"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.UseServiceProviderFactory``1(Microsoft.Extensions.DependencyInjection.IServiceProviderFactory{``0})">
+            <summary>
+            Configures the host builder to use the specified service provider factory.
+            </summary>
+            <typeparam name="TContainerBuilder">The type of the container builder.</typeparam>
+            <param name="factory">The service provider factory to use.</param>
+            <returns>The current instance of <see cref="T:SuperSocket.Server.Host.SuperSocketHostBuilder`1"/>.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.ServerHostBuilderAdapter`1.UseServiceProviderFactory``1(System.Func{Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.DependencyInjection.IServiceProviderFactory{``0}})">
+            <summary>
+            Configures the host builder to use the specified service provider factory.
+            </summary>
+            <typeparam name="TContainerBuilder">The type of the container builder.</typeparam>
+            <param name="factory">The factory function to create the service provider factory.</param>
+            <returns>The current instance of <see cref="T:SuperSocket.Server.Host.SuperSocketHostBuilder`1"/>.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Host.SuperSocketApplicationBuilder">
+            <summary>
+            Provides a builder for configuring and building a SuperSocket web application.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Host.SuperSocketApplicationBuilder.Properties">
+            <summary>
+            Gets the properties associated with the application builder.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Host.SuperSocketApplicationBuilder.Configuration">
+            <summary>
+            Gets the configuration manager for the application.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Host.SuperSocketApplicationBuilder.Environment">
+            <summary>
+            Gets the hosting environment for the application.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Host.SuperSocketApplicationBuilder.Logging">
+            <summary>
+            Gets the logging builder for configuring logging services.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Host.SuperSocketApplicationBuilder.Metrics">
+            <summary>
+            Gets the metrics builder for configuring metrics services.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.Host.SuperSocketApplicationBuilder.Services">
+            <summary>
+            Gets the service collection for the application.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketApplicationBuilder.#ctor(Microsoft.Extensions.Hosting.IHostApplicationBuilder)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Host.SuperSocketApplicationBuilder"/> class.
+            </summary>
+            <param name="hostApplicationBuilder">The underlying host application builder.</param>
+        </member>
+        <member name="P:SuperSocket.Server.Host.SuperSocketApplicationBuilder.Host">
+            <summary>
+            Gets the host builder associated with the application.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketApplicationBuilder.Build">
+            <summary>
+            Builds the host for the application.
+            </summary>
+            <returns>The built host.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketApplicationBuilder.Microsoft#Extensions#Hosting#IHostApplicationBuilder#ConfigureContainer``1(Microsoft.Extensions.DependencyInjection.IServiceProviderFactory{``0},System.Action{``0})">
+            <summary>
+            Configures the container for the application.
+            </summary>
+            <typeparam name="TContainerBuilder">The type of the container builder.</typeparam>
+            <param name="factory">The service provider factory to use.</param>
+            <param name="configure">The action to configure the container.</param>
+        </member>
+        <member name="T:SuperSocket.Server.Host.SuperSocketHostBuilder`1">
+            <summary>
+            Provides a builder for configuring and building a SuperSocket host.
+            </summary>
+            <typeparam name="TReceivePackage">The type of the package received by the host.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Server.Host.SuperSocketHostBuilder`1.ConfigureServicesActions">
+            <summary>
+            Gets the list of actions to configure services.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.Host.SuperSocketHostBuilder`1.ConfigureSupplementServicesActions">
+            <summary>
+            Gets the list of actions to configure supplemental services.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.#ctor(Microsoft.Extensions.Hosting.IHostBuilder)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Host.SuperSocketHostBuilder`1"/> class with the specified host builder.
+            </summary>
+            <param name="hostBuilder">The host builder to adapt.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Host.SuperSocketHostBuilder`1"/> class with default settings.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.#ctor(System.String[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.Host.SuperSocketHostBuilder`1"/> class with the specified arguments.
+            </summary>
+            <param name="args">The command-line arguments for the host builder.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.Build">
+            <summary>
+            Builds the host for the SuperSocket application.
+            </summary>
+            <returns>The built host.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.ConfigureSupplementServices(System.Action{Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.DependencyInjection.IServiceCollection})">
+            <summary>
+            Configures supplemental services for the host builder.
+            </summary>
+            <param name="configureDelegate">The action to configure supplemental services.</param>
+            <returns>The updated host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.RegisterBasicServices(Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers basic services required for the SuperSocket host.
+            </summary>
+            <param name="builderContext">The host builder context.</param>
+            <param name="servicesInHost">Services collection from the host.</param>
+            <param name="services">The service collection to register services into.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.RegisterDefaultServices(Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers default services required for the SuperSocket host functionality.
+            </summary>
+            <param name="builderContext">The host builder context.</param>
+            <param name="servicesInHost">Services collection from the host.</param>
+            <param name="services">The service collection to register services into.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.CheckIfExistHostedService(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Checks if any hosted service of type SuperSocketService is already registered.
+            </summary>
+            <param name="services">The service collection to check.</param>
+            <returns>True if a hosted service is registered, otherwise false.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.RegisterDefaultHostedService(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers the default hosted service for SuperSocket.
+            </summary>
+            <param name="servicesInHost">The service collection to register the hosted service into.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.RegisterHostedService``1(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers a specific hosted service for SuperSocket.
+            </summary>
+            <typeparam name="THostedService">The type of the hosted service to register.</typeparam>
+            <param name="servicesInHost">The service collection to register the hosted service into.</param>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.ConfigureServerOptions(System.Func{Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.Configuration.IConfiguration,Microsoft.Extensions.Configuration.IConfiguration})">
+            <summary>
+            Configures server options for the host builder.
+            </summary>
+            <param name="serverOptionsReader">The function to read and configure server options.</param>
+            <returns>The updated host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.ConfigureServices(System.Action{Microsoft.Extensions.Hosting.HostBuilderContext,Microsoft.Extensions.DependencyInjection.IServiceCollection})">
+            <summary>
+            Configures the services for the host builder.
+            </summary>
+            <param name="configureDelegate">The delegate to configure services.</param>
+            <returns>The updated host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.UsePipelineFilter``1">
+            <summary>
+            Configures the host builder to use a specific pipeline filter.
+            </summary>
+            <typeparam name="TPipelineFilter">The type of the pipeline filter to use.</typeparam>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.UsePipelineFilterFactory``1">
+            <summary>
+            Configures the host builder to use a specific pipeline filter factory.
+            </summary>
+            <typeparam name="TPipelineFilterFactory">The type of the pipeline filter factory to use.</typeparam>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.UseSession``1">
+            <summary>
+            Configures the host builder to use a specific session type.
+            </summary>
+            <typeparam name="TSession">The type of session to use.</typeparam>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.UseSessionFactory``1">
+            <summary>
+            Configures the host builder to use a specific session factory.
+            </summary>
+            <typeparam name="TSessionFactory">The type of the session factory to use.</typeparam>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.UseHostedService``1">
+            <summary>
+            Configures the host builder to use a specific hosted service.
+            </summary>
+            <typeparam name="THostedService">The type of the hosted service to use.</typeparam>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.UsePackageDecoder``1">
+            <summary>
+            Configures the host builder to use a specific package decoder.
+            </summary>
+            <typeparam name="TPackageDecoder">The type of the package decoder to use.</typeparam>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.UsePackageEncoder``1">
+            <summary>
+            Configures the host builder to use a specific package encoder.
+            </summary>
+            <typeparam name="TPackageEncoder">The type of the package encoder to use.</typeparam>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.UseMiddleware``1">
+            <summary>
+            Configures the host builder to use a specific middleware.
+            </summary>
+            <typeparam name="TMiddleware">The type of the middleware to use.</typeparam>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.UsePackageHandlingScheduler``1">
+            <summary>
+            Configures the host builder to use a specific package handling scheduler.
+            </summary>
+            <typeparam name="TPackageHandlingScheduler">The type of the package handling scheduler to use.</typeparam>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.UsePackageHandlingContextAccessor">
+            <summary>
+            Configures the host builder to use a package handling context accessor.
+            </summary>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder`1.UseGZip">
+            <summary>
+            Configures the host builder to use GZip compression.
+            </summary>
+            <returns>The configured host builder.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.Host.SuperSocketHostBuilder">
+            <summary>
+            Helper class for creating SuperSocketHostBuilder instances.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder.Create``1">
+            <summary>
+            Creates a new SuperSocketHostBuilder for the specified package type.
+            </summary>
+            <typeparam name="TReceivePackage">The type of packages to be received.</typeparam>
+            <returns>A new ISuperSocketHostBuilder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder.Create``1(System.String[])">
+            <summary>
+            Creates a new SuperSocketHostBuilder for the specified package type with command line arguments.
+            </summary>
+            <typeparam name="TReceivePackage">The type of packages to be received.</typeparam>
+            <param name="args">Command line arguments.</param>
+            <returns>A new ISuperSocketHostBuilder.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder.Create``2">
+            <summary>
+            Creates a new SuperSocketHostBuilder with a specified package type and pipeline filter.
+            </summary>
+            <typeparam name="TReceivePackage">The type of packages to be received.</typeparam>
+            <typeparam name="TPipelineFilter">The type of pipeline filter to use.</typeparam>
+            <returns>A new ISuperSocketHostBuilder with the specified pipeline filter.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.Host.SuperSocketHostBuilder.Create``2(System.String[])">
+            <summary>
+            Creates a new SuperSocketHostBuilder with a specified package type, pipeline filter, and command line arguments.
+            </summary>
+            <typeparam name="TReceivePackage">The type of packages to be received.</typeparam>
+            <typeparam name="TPipelineFilter">The type of pipeline filter to use.</typeparam>
+            <param name="args">Command line arguments.</param>
+            <returns>A new ISuperSocketHostBuilder with the specified pipeline filter.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.IConfigureContainerAdapter">
+            <summary>
+            Defines a method to configure a container builder in the context of a host.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.IConfigureContainerAdapter.ConfigureContainer(Microsoft.Extensions.Hosting.HostBuilderContext,System.Object)">
+            <summary>
+            Configures the container builder with the specified host context.
+            </summary>
+            <param name="hostContext">The context of the host.</param>
+            <param name="containerBuilder">The container builder to configure.</param>
+        </member>
+        <member name="T:SuperSocket.Server.ConfigureContainerAdapter`1">
+            <summary>
+            Provides an implementation of <see cref="T:SuperSocket.Server.IConfigureContainerAdapter"/> for a specific container builder type.
+            </summary>
+            <typeparam name="TContainerBuilder">The type of the container builder.</typeparam>
+        </member>
+        <member name="M:SuperSocket.Server.ConfigureContainerAdapter`1.#ctor(System.Action{Microsoft.Extensions.Hosting.HostBuilderContext,`0})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.ConfigureContainerAdapter`1"/> class with the specified action.
+            </summary>
+            <param name="action">The action to configure the container builder.</param>
+            <exception cref="T:System.ArgumentNullException">Thrown if the action is null.</exception>
+        </member>
+        <member name="M:SuperSocket.Server.ConfigureContainerAdapter`1.ConfigureContainer(Microsoft.Extensions.Hosting.HostBuilderContext,System.Object)">
+            <summary>
+            Configures the container builder with the specified host context.
+            </summary>
+            <param name="hostContext">The context of the host.</param>
+            <param name="containerBuilder">The container builder to configure.</param>
+        </member>
+        <member name="T:SuperSocket.Server.IPackageHandlingContextAccessor`1">
+            <summary>
+            Provides access to the package handling context for a specific package type.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Server.IPackageHandlingContextAccessor`1.PackageHandlingContext">
+            <summary>
+            Gets or sets the package handling context.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Server.PackageHandlingContext`2">
+            <summary>
+            Represents the context for handling a package in the server.
+            </summary>
+            <typeparam name="TAppSession">The type of the application session.</typeparam>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="M:SuperSocket.Server.PackageHandlingContext`2.#ctor(`0,`1)">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.PackageHandlingContext`2"/> class.
+            </summary>
+            <param name="appSession">The application session associated with the package.</param>
+            <param name="packageInfo">The package information.</param>
+        </member>
+        <member name="P:SuperSocket.Server.PackageHandlingContext`2.AppSession">
+            <summary>
+            Gets the application session associated with the package.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.PackageHandlingContext`2.PackageInfo">
+            <summary>
+            Gets the package information.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Server.PackageHandlingContextAccessor`1">
+            <summary>
+            Provides access to the package handling context for a specific package type.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Server.PackageHandlingContextAccessor`1.SuperSocket#Server#IPackageHandlingContextAccessor{TPackageInfo}#PackageHandlingContext">
+            <summary>
+            Gets or sets the package handling context for the current asynchronous flow.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Server.PackageHandlingContextAccessor`1.PackageHandlingContextHolder">
+            <summary>
+            Holds the package handling context for the current asynchronous flow.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.PackageHandlingContextAccessor`1.PackageHandlingContextHolder.Context">
+            <summary>
+            Gets or sets the package handling context.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Server.PackageHandlingSchedulerBase`1">
+            <summary>
+            Base class for package handling schedulers.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="P:SuperSocket.Server.PackageHandlingSchedulerBase`1.PackageHandler">
+            <summary>
+            Gets the package handler.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.PackageHandlingSchedulerBase`1.ErrorHandler">
+            <summary>
+            Gets the error handler for package handling exceptions.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.PackageHandlingSchedulerBase`1.HandlePackage(SuperSocket.Server.Abstractions.Session.IAppSession,`0,System.Threading.CancellationToken)">
+            <summary>
+            Handles a package for a given session.
+            </summary>
+            <param name="session">The session associated with the package.</param>
+            <param name="package">The package to handle.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.PackageHandlingSchedulerBase`1.Initialize(SuperSocket.Server.Abstractions.IPackageHandler{`0},System.Func{SuperSocket.Server.Abstractions.Session.IAppSession,SuperSocket.PackageHandlingException{`0},System.Threading.Tasks.ValueTask{System.Boolean}})">
+            <summary>
+            Initializes the package handler and error handler.
+            </summary>
+            <param name="packageHandler">The package handler to use.</param>
+            <param name="errorHandler">The error handler to use.</param>
+        </member>
+        <member name="M:SuperSocket.Server.PackageHandlingSchedulerBase`1.HandlePackageInternal(SuperSocket.Server.Abstractions.Session.IAppSession,`0,System.Threading.CancellationToken)">
+            <summary>
+            Handles a package internally with error handling.
+            </summary>
+            <param name="session">The session associated with the package.</param>
+            <param name="package">The package to handle.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.SerialPackageHandlingScheduler`1">
+            <summary>
+            A package handling scheduler that processes packages serially.
+            </summary>
+            <typeparam name="TPackageInfo">The type of the package information.</typeparam>
+        </member>
+        <member name="M:SuperSocket.Server.SerialPackageHandlingScheduler`1.HandlePackage(SuperSocket.Server.Abstractions.Session.IAppSession,`0,System.Threading.CancellationToken)">
+            <summary>
+            Handles a package for a given session.
+            </summary>
+            <param name="session">The session associated with the package.</param>
+            <param name="package">The package to handle.</param>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="T:SuperSocket.Server.SessionHandlers">
+            <summary>
+            Represents handlers for session events such as connection and disconnection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.SessionHandlers.Connected">
+            <summary>
+            Gets or sets the handler to be invoked when a session is connected.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.SessionHandlers.Closed">
+            <summary>
+            Gets or sets the handler to be invoked when a session is closed.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.Server.SuperSocketExtensions">
+            <summary>
+            Provides extension methods for SuperSocket components.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketExtensions.ActiveConnect(SuperSocket.Server.Abstractions.IServer,System.Net.EndPoint)">
+            <summary>
+            Establishes an active connection to the specified remote endpoint and registers the connection with the server.
+            </summary>
+            <param name="server">The server to register the connection with.</param>
+            <param name="remoteEndpoint">The remote endpoint to connect to.</param>
+            <returns>A task that represents the asynchronous operation. The task result contains a value indicating whether the connection was successful.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketExtensions.GetDefaultLogger(SuperSocket.Server.Abstractions.Session.IAppSession)">
+            <summary>
+            Gets the default logger associated with the session.
+            </summary>
+            <param name="session">The session to get the logger for.</param>
+            <returns>The default logger for the session.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketExtensions.AddListener(SuperSocket.Server.Abstractions.ServerOptions,SuperSocket.Server.Abstractions.ListenOptions)">
+            <summary>
+            Adds a listener to the server options.
+            </summary>
+            <param name="serverOptions">The server options to add the listener to.</param>
+            <param name="listener">The listener to add.</param>
+            <returns>The updated server options.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketExtensions.AdaptMultipleServerHost(Microsoft.Extensions.Hosting.IHost)">
+            <summary>
+            Adapts the host to support multiple server hosting.
+            </summary>
+            <param name="host">The host to adapt.</param>
+        </member>
+        <member name="T:SuperSocket.Server.SuperSocketService`1">
+            <summary>
+            Represents a SuperSocket service that handles connections and sessions.
+            </summary>
+            <typeparam name="TReceivePackageInfo">The type of the package information received.</typeparam>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._serviceProvider">
+            <summary>
+            The service provider used for dependency injection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.SuperSocketService`1.ServiceProvider">
+            <summary>
+            Gets the service provider for dependency injection.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.SuperSocketService`1.Options">
+            <summary>
+            Gets the server options for configuration.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._loggerFactory">
+            <summary>
+            The logger factory used to create loggers.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._logger">
+            <summary>
+            The logger instance for this service.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.SuperSocketService`1.Logger">
+            <summary>
+            Gets the logger for this service.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.SuperSocketService`1.SuperSocket#ILoggerAccessor#Logger">
+            <summary>
+            Gets the logger for the service.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._pipelineFilterFactory">
+            <summary>
+            The pipeline filter factory for processing received data.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._connectionListenerFactory">
+            <summary>
+            The factory for creating connection listeners.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._connectionListeners">
+            <summary>
+            The list of active connection listeners.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._packageHandlingScheduler">
+            <summary>
+            The scheduler for handling received packages.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._packageHandlingContextAccessor">
+            <summary>
+            The accessor for the current package handling context.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.SuperSocketService`1.Name">
+            <summary>
+            Gets the name of the server.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._sessionCount">
+            <summary>
+            The current count of active sessions.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.SuperSocketService`1.SessionCount">
+            <summary>
+            Gets the current session count.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._sessionFactory">
+            <summary>
+            The factory for creating new sessions.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._middlewares">
+            <summary>
+            The array of configured middlewares.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.SuperSocketService`1.Middlewares">
+            <summary>
+            Gets the array of configured middlewares.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._state">
+            <summary>
+            The current state of the server.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.SuperSocketService`1.State">
+            <summary>
+            Gets the current state of the server.
+            </summary>
+        </member>
+        <member name="P:SuperSocket.Server.SuperSocketService`1.DataContext">
+            <summary>
+            Gets or sets the data context for the server.
+            </summary>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1._sessionHandlers">
+            <summary>
+            The handlers for session events.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.#ctor(System.IServiceProvider,Microsoft.Extensions.Options.IOptions{SuperSocket.Server.Abstractions.ServerOptions})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.Server.SuperSocketService`1"/> class.
+            </summary>
+            <param name="serviceProvider">The service provider for dependency injection.</param>
+            <param name="serverOptions">The server options for configuration.</param>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.GetPipelineFilterFactory">
+            <summary>
+            Gets the pipeline filter factory to be used for processing received data.
+            </summary>
+            <returns>A configured pipeline filter factory.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.AddConnectionListener(SuperSocket.Server.Abstractions.ListenOptions,SuperSocket.Server.Abstractions.ServerOptions)">
+            <summary>
+            Adds a new connection listener using the specified options.
+            </summary>
+            <param name="listenOptions">The options for the listener, or null for default options.</param>
+            <param name="serverOptions">The server options for configuration.</param>
+            <returns>True if the listener was successfully created and started; otherwise, false.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.StartListenAsync(System.Threading.CancellationToken)">
+            <summary>
+            Starts listening for incoming connections.
+            </summary>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation. The task result indicates whether any listeners were started successfully.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.OnNewConnectionAccept(SuperSocket.Server.Abstractions.ListenOptions,SuperSocket.Connection.IConnection)">
+            <summary>
+            Called when a new connection is accepted by a listener.
+            </summary>
+            <param name="listenOptions">The options for the listener that accepted the connection.</param>
+            <param name="connection">The newly established connection.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.AcceptNewConnection(SuperSocket.Connection.IConnection)">
+            <summary>
+            Accepts a new connection and creates a session for it.
+            </summary>
+            <param name="connection">The newly established connection.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.SuperSocket#Server#Abstractions#Connections#IConnectionRegister#RegisterConnection(System.Object)">
+            <summary>
+            Registers a new connection source with the server.
+            </summary>
+            <param name="connectionSource">The source of the connection to register.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.CreatePipelineContext(SuperSocket.Server.Abstractions.Session.IAppSession)">
+            <summary>
+            Creates a context for the pipeline filter based on the session.
+            </summary>
+            <param name="session">The session for which to create the context.</param>
+            <returns>The created pipeline context.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.InitializeMiddlewares">
+            <summary>
+            Initializes the middleware components from the service provider.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.ShutdownMiddlewares">
+            <summary>
+            Shuts down all middleware components.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.RegisterSessionInMiddlewares(SuperSocket.Server.Abstractions.Session.IAppSession)">
+            <summary>
+            Registers a session with all middleware components.
+            </summary>
+            <param name="session">The session to register.</param>
+            <returns>A task that represents the asynchronous operation. The task result indicates whether the registration was successful with all middlewares.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.UnRegisterSessionFromMiddlewares(SuperSocket.Server.Abstractions.Session.IAppSession)">
+            <summary>
+            Unregisters a session from all middleware components.
+            </summary>
+            <param name="session">The session to unregister.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.InitializeSession(SuperSocket.Server.Abstractions.Session.IAppSession,SuperSocket.Connection.IConnection)">
+            <summary>
+            Initializes a session with the given connection and registers it with middlewares.
+            </summary>
+            <param name="session">The session to initialize.</param>
+            <param name="connection">The connection to associate with the session.</param>
+            <returns>A task that represents the asynchronous operation. The task result indicates whether initialization was successful.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.OnSessionConnectedAsync(SuperSocket.Server.Abstractions.Session.IAppSession)">
+            <summary>
+            Called when a session is connected and has been initialized.
+            </summary>
+            <param name="session">The connected session.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.OnConnectionClosed(SuperSocket.Server.Abstractions.Session.IAppSession,SuperSocket.Connection.CloseEventArgs)">
+            <summary>
+            Handles the closing of a connection.
+            </summary>
+            <param name="session">The session associated with the closed connection.</param>
+            <param name="e">The event arguments containing the reason for closure.</param>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.OnSessionClosedAsync(SuperSocket.Server.Abstractions.Session.IAppSession,SuperSocket.Connection.CloseEventArgs)">
+            <summary>
+            Called when a session is closed.
+            </summary>
+            <param name="session">The closed session.</param>
+            <param name="e">The event arguments containing the reason for closure.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.FireSessionConnectedEvent(SuperSocket.Server.AppSession)">
+            <summary>
+            Fires the session connected event for a session.
+            </summary>
+            <param name="session">The connected session.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.FireSessionClosedEvent(SuperSocket.Server.AppSession,SuperSocket.Connection.CloseReason)">
+            <summary>
+            Fires the session closed event for a session.
+            </summary>
+            <param name="session">The closed session.</param>
+            <param name="reason">The reason for the session closure.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.SuperSocket#Server#Abstractions#Session#ISessionEventHost#HandleSessionConnectedEvent(SuperSocket.Server.Abstractions.Session.IAppSession)">
+            <summary>
+            Handles the session connected event from the session event host interface.
+            </summary>
+            <param name="session">The connected session.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.SuperSocket#Server#Abstractions#Session#ISessionEventHost#HandleSessionClosedEvent(SuperSocket.Server.Abstractions.Session.IAppSession,SuperSocket.Connection.CloseReason)">
+            <summary>
+            Handles the session closed event from the session event host interface.
+            </summary>
+            <param name="session">The closed session.</param>
+            <param name="reason">The reason for the session closure.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.HandleSession(SuperSocket.Server.AppSession,SuperSocket.Connection.IConnection)">
+            <summary>
+            Handles a session by processing its incoming packages.
+            </summary>
+            <param name="session">The session to handle.</param>
+            <param name="connection">The connection associated with the session.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.GetPackageHandlingCancellationTokenSource(System.Threading.CancellationToken)">
+            <summary>
+            Gets a cancellation token source for package handling with a timeout.
+            </summary>
+            <param name="cancellationToken">The base cancellation token to link with.</param>
+            <returns>A new cancellation token source linked to the provided token with a timeout.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.OnSessionErrorAsync(SuperSocket.Server.Abstractions.Session.IAppSession,SuperSocket.PackageHandlingException{`0})">
+            <summary>
+            Called when an error occurs while processing a package for a session.
+            </summary>
+            <param name="session">The session where the error occurred.</param>
+            <param name="exception">The exception that was thrown during package handling.</param>
+            <returns>A task that represents the asynchronous operation. The task result indicates whether the session should continue processing packages.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.StartAsync(System.Threading.CancellationToken)">
+            <summary>
+            Starts the SuperSocket service asynchronously.
+            </summary>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.OnStartedAsync">
+            <summary>
+            Called after the server has started successfully.
+            </summary>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.OnStopAsync">
+            <summary>
+            Called before the server stops.
+            </summary>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.StopListener(SuperSocket.Server.Abstractions.Connections.IConnectionListener)">
+            <summary>
+            Stops a connection listener.
+            </summary>
+            <param name="listener">The listener to stop.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.StopAsync(System.Threading.CancellationToken)">
+            <summary>
+            Stops the SuperSocket service asynchronously.
+            </summary>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.Microsoft#Extensions#Hosting#IHostedService#StartAsync(System.Threading.CancellationToken)">
+            <summary>
+            Implementation of IHostedService.StartAsync. Starts the SuperSocket service and throws an exception if it fails.
+            </summary>
+            <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="F:SuperSocket.Server.SuperSocketService`1.disposedValue">
+            <summary>
+            Flag to detect redundant dispose calls.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.System#IAsyncDisposable#DisposeAsync">
+            <summary>
+            Asynchronously disposes of resources used by the service.
+            </summary>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.DisposeAsync(System.Boolean)">
+            <summary>
+            Asynchronously releases the unmanaged resources used by the service and optionally releases the managed resources.
+            </summary>
+            <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.Dispose(System.Boolean)">
+            <summary>
+            Releases the unmanaged resources used by the service and optionally releases the managed resources.
+            </summary>
+            <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+        </member>
+        <member name="M:SuperSocket.Server.SuperSocketService`1.System#IDisposable#Dispose">
+            <summary>
+            Implementation of IDisposable.Dispose. Releases all resources used by the service.
+            </summary>
+        </member>
+        <member name="T:SuperSocket.DefaultStringEncoderForDI">
+            <summary>
+            Provides a default string encoder for dependency injection, using server options for configuration.
+            </summary>
+        </member>
+        <member name="M:SuperSocket.DefaultStringEncoderForDI.#ctor(Microsoft.Extensions.Options.IOptions{SuperSocket.Server.Abstractions.ServerOptions})">
+            <summary>
+            Initializes a new instance of the <see cref="T:SuperSocket.DefaultStringEncoderForDI"/> class with the specified server options.
+            </summary>
+            <param name="serverOptions">The server options containing the default text encoding.</param>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,311 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/runner/work/SuperSocket/SuperSocket/pkg/SuperSocket.csproj": {}
+  },
+  "projects": {
+    "/Users/runner/work/SuperSocket/SuperSocket/pkg/SuperSocket.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/runner/work/SuperSocket/SuperSocket/pkg/SuperSocket.csproj",
+        "projectName": "SuperSocket",
+        "projectPath": "/Users/runner/work/SuperSocket/SuperSocket/pkg/SuperSocket.csproj",
+        "packagesPath": "/Users/runner/.nuget/packages/",
+        "outputPath": "/Users/runner/work/SuperSocket/SuperSocket/pkg/obj/",
+        "projectStyle": "PackageReference",
+        "crossTargeting": true,
+        "centralPackageVersionsManagementEnabled": true,
+        "configFilePaths": [
+          "/Users/runner/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0",
+          "net7.0",
+          "net8.0",
+          "net9.0"
+        ],
+        "sources": {
+          "/Users/runner/.dotnet/library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {}
+          },
+          "net7.0": {
+            "targetAlias": "net7.0",
+            "projectReferences": {}
+          },
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          },
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.300"
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "dependencies": {
+            "Microsoft.SourceLink.GitHub": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.0, )",
+              "versionCentrallyManaged": true
+            }
+          },
+          "centralPackageVersions": {
+            "Autofac.Extensions.DependencyInjection": "6.0.0",
+            "BenchmarkDotNet": "0.13.1",
+            "Google.Protobuf": "3.30.2",
+            "Meziantou.Extensions.Logging.Xunit.v3": "1.0.0",
+            "Microsoft.AspNetCore.SpaServices.Extensions": "3.1.5",
+            "Microsoft.Extensions.Configuration": "8.0.0",
+            "Microsoft.Extensions.Configuration.Binder": "8.0.0",
+            "Microsoft.Extensions.DependencyInjection": "8.0.0",
+            "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Hosting": "8.0.0",
+            "Microsoft.Extensions.Hosting.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Logging": "8.0.0",
+            "Microsoft.Extensions.Logging.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Logging.Console": "8.0.0",
+            "Microsoft.Extensions.Logging.Debug": "8.0.0",
+            "Microsoft.Extensions.ObjectPool": "8.0.0",
+            "Microsoft.Extensions.Options": "8.0.0",
+            "Microsoft.Extensions.Options.ConfigurationExtensions": "8.0.0",
+            "Microsoft.NET.Test.Sdk": "17.9.0",
+            "Microsoft.SourceLink.GitHub": "8.0.0",
+            "System.IO.Pipelines": "8.0.0",
+            "System.Text.Json": "8.0.5",
+            "xunit.runner.visualstudio": "3.0.1",
+            "xunit.v3": "1.0.1"
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[6.0.36, 6.0.36]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[6.0.36, 6.0.36]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/Users/runner/.dotnet/sdk/9.0.302/RuntimeIdentifierGraph.json"
+        },
+        "net7.0": {
+          "targetAlias": "net7.0",
+          "dependencies": {
+            "Microsoft.SourceLink.GitHub": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.0, )",
+              "versionCentrallyManaged": true
+            }
+          },
+          "centralPackageVersions": {
+            "Autofac.Extensions.DependencyInjection": "6.0.0",
+            "BenchmarkDotNet": "0.13.1",
+            "Google.Protobuf": "3.30.2",
+            "Meziantou.Extensions.Logging.Xunit.v3": "1.0.0",
+            "Microsoft.AspNetCore.SpaServices.Extensions": "3.1.5",
+            "Microsoft.Extensions.Configuration": "8.0.0",
+            "Microsoft.Extensions.Configuration.Binder": "8.0.0",
+            "Microsoft.Extensions.DependencyInjection": "8.0.0",
+            "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Hosting": "8.0.0",
+            "Microsoft.Extensions.Hosting.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Logging": "8.0.0",
+            "Microsoft.Extensions.Logging.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Logging.Console": "8.0.0",
+            "Microsoft.Extensions.Logging.Debug": "8.0.0",
+            "Microsoft.Extensions.ObjectPool": "8.0.0",
+            "Microsoft.Extensions.Options": "8.0.0",
+            "Microsoft.Extensions.Options.ConfigurationExtensions": "8.0.0",
+            "Microsoft.NET.Test.Sdk": "17.9.0",
+            "Microsoft.SourceLink.GitHub": "8.0.0",
+            "System.IO.Pipelines": "8.0.0",
+            "System.Text.Json": "8.0.5",
+            "xunit.runner.visualstudio": "3.0.1",
+            "xunit.v3": "1.0.1"
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[7.0.20, 7.0.20]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[7.0.20, 7.0.20]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/Users/runner/.dotnet/sdk/9.0.302/RuntimeIdentifierGraph.json"
+        },
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.SourceLink.GitHub": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.0, )",
+              "versionCentrallyManaged": true
+            }
+          },
+          "centralPackageVersions": {
+            "Autofac.Extensions.DependencyInjection": "6.0.0",
+            "BenchmarkDotNet": "0.13.1",
+            "Google.Protobuf": "3.30.2",
+            "Meziantou.Extensions.Logging.Xunit.v3": "1.0.0",
+            "Microsoft.AspNetCore.SpaServices.Extensions": "3.1.5",
+            "Microsoft.Extensions.Configuration": "8.0.0",
+            "Microsoft.Extensions.Configuration.Binder": "8.0.0",
+            "Microsoft.Extensions.DependencyInjection": "8.0.0",
+            "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Hosting": "8.0.0",
+            "Microsoft.Extensions.Hosting.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Logging": "8.0.0",
+            "Microsoft.Extensions.Logging.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Logging.Console": "8.0.0",
+            "Microsoft.Extensions.Logging.Debug": "8.0.0",
+            "Microsoft.Extensions.ObjectPool": "8.0.0",
+            "Microsoft.Extensions.Options": "8.0.0",
+            "Microsoft.Extensions.Options.ConfigurationExtensions": "8.0.0",
+            "Microsoft.NET.Test.Sdk": "17.9.0",
+            "Microsoft.SourceLink.GitHub": "8.0.0",
+            "System.IO.Pipelines": "8.0.0",
+            "System.Text.Json": "8.0.5",
+            "xunit.runner.visualstudio": "3.0.1",
+            "xunit.v3": "1.0.1"
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.18, 8.0.18]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.18, 8.0.18]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/Users/runner/.dotnet/sdk/9.0.302/PortableRuntimeIdentifierGraph.json"
+        },
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.SourceLink.GitHub": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.0, )",
+              "versionCentrallyManaged": true
+            }
+          },
+          "centralPackageVersions": {
+            "Autofac.Extensions.DependencyInjection": "6.0.0",
+            "BenchmarkDotNet": "0.13.1",
+            "Google.Protobuf": "3.30.2",
+            "Meziantou.Extensions.Logging.Xunit.v3": "1.0.0",
+            "Microsoft.AspNetCore.SpaServices.Extensions": "3.1.5",
+            "Microsoft.Extensions.Configuration": "8.0.0",
+            "Microsoft.Extensions.Configuration.Binder": "8.0.0",
+            "Microsoft.Extensions.DependencyInjection": "8.0.0",
+            "Microsoft.Extensions.DependencyInjection.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Hosting": "8.0.0",
+            "Microsoft.Extensions.Hosting.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Logging": "8.0.0",
+            "Microsoft.Extensions.Logging.Abstractions": "8.0.0",
+            "Microsoft.Extensions.Logging.Console": "8.0.0",
+            "Microsoft.Extensions.Logging.Debug": "8.0.0",
+            "Microsoft.Extensions.ObjectPool": "8.0.0",
+            "Microsoft.Extensions.Options": "8.0.0",
+            "Microsoft.Extensions.Options.ConfigurationExtensions": "8.0.0",
+            "Microsoft.NET.Test.Sdk": "17.9.0",
+            "Microsoft.SourceLink.GitHub": "8.0.0",
+            "System.IO.Pipelines": "8.0.0",
+            "System.Text.Json": "8.0.5",
+            "xunit.runner.visualstudio": "3.0.1",
+            "xunit.v3": "1.0.1"
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/Users/runner/.dotnet/sdk/9.0.302/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Centralized Salon & Gym Management",
+  "description": "A luxury-minimal multi-branch web application for synchronized salon and gym operations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
