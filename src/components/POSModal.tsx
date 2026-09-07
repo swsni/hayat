@@ -154,7 +154,9 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
     { id: 'sp-5', name: 'Sidr with wash', price: 20.000, sessions: 1 },
     { id: 'sp-6', name: 'Oil Massage without wash', price: 15.000, sessions: 1 },
     { id: 'sp-7', name: 'Oil Massage with wash', price: 18.000, sessions: 1 },
-    { id: 'sp-8', name: 'Green Mashat with wash', price: 30.000, sessions: 1 }
+    { id: 'sp-8', name: 'Green Mashat with wash', price: 30.000, sessions: 1 },
+    { id: 'sp-moist', name: language === 'ar' ? 'بكج الترطيب' : 'Moisturizing Package', price: 45.000, sessions: 1 },
+    { id: 'sp-gaps', name: language === 'ar' ? 'بكج الفراغات' : 'Gaps Package', price: 45.000, sessions: 1 }
   ];
 
   const gymPromos = [
@@ -351,6 +353,19 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
     const isSplit = splitPayments.length > 1;
     const primaryPaymentMethod: PaymentMethod = isSplit ? 'Split' : splitPayments[0].method;
 
+    const effectivePrice = isEmployeeDiscount ? selectedItem.price * 0.70 : selectedItem.price;
+    const discountAmt = isEmployeeDiscount ? selectedItem.price * 0.30 : 0;
+    let descName = isEmployeeDiscount 
+      ? `${selectedItem.name} (${language === 'ar' ? 'خصم موظفين 30%' : '30% Staff Discount'})`
+      : selectedItem.name;
+      
+    if (selectedItem.isCouple && coupleSecondCustomer) {
+      descName += ` (مع: ${coupleSecondCustomer.name} - ${coupleSecondCustomer.phone})`;
+    }
+    if (selectedItem.isTriple && tripleThirdCustomer) {
+      descName += ` و (${tripleThirdCustomer.name} - ${tripleThirdCustomer.phone})`;
+    }
+
     if (isFirebaseConfigured && db && navigator.onLine) {
       try {
         // ── Atomic Firestore Batch ────────────────────────────────────────
@@ -361,11 +376,6 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
         const batch = writeBatch(db);
 
         // ── Operation 1: Create Invoice ───────────────────────────────────
-        const effectivePrice = isEmployeeDiscount ? selectedItem.price * 0.70 : selectedItem.price;
-        const discountAmt = isEmployeeDiscount ? selectedItem.price * 0.30 : 0;
-        const descName = isEmployeeDiscount 
-          ? `${selectedItem.name} (${language === 'ar' ? 'خصم موظفين 30%' : '30% Staff Discount'})`
-          : selectedItem.name;
 
         const invoiceRef = doc(db, 'invoices', generatedInvoiceId);
         const invoiceData: Invoice = {
@@ -429,7 +439,14 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
 
         // ── Operation 4: Customer Package Record ──────────────────────────
         if (type !== 'cafe') {
-          if (selectedItem.name && selectedItem.name.includes('باقة حياة')) {
+          if (selectedItem.name && (
+              selectedItem.name.includes('باقة حياة') || 
+              selectedItem.name.includes('Hayat Package') ||
+              selectedItem.name.includes('بكج الترطيب') || 
+              selectedItem.name.includes('Moisturizing Package') ||
+              selectedItem.name.includes('بكج الفراغات') || 
+              selectedItem.name.includes('Gaps Package')
+          )) {
             const subPackages = expandHayatPackage(
               customer.id,
               selectedItem.id,
@@ -437,7 +454,8 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
               now,
               calculatedStartDate,
               isQatar,
-              generatedPackageId
+              generatedPackageId,
+              selectedItem.name
             );
 
             subPackages.forEach((pkg) => {
@@ -451,7 +469,7 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
             batch.set(packageRef, {
               customerId:         customer.id,
               packageId:          selectedItem.id,
-              packageName:        selectedItem.name,
+              packageName:        descName,
               category:           type,
               totalSessions:      selectedItem.sessions,
               remainingSessions:  selectedItem.sessions,
@@ -469,7 +487,7 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
           batch.set(partnerPkgRef, {
             customerId:         coupleSecondCustomer.id,
             packageId:          selectedItem.id,
-            packageName:        `Partner: ${selectedItem.name}`,
+            packageName:        `Partner: ${selectedItem.name} (مع: ${customer.name} - ${customer.phone})`,
             category:           'gym',
             totalSessions:      1,
             remainingSessions:  1,
@@ -497,7 +515,7 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
           batch.set(thirdPkgRef, {
             customerId:         tripleThirdCustomer.id,
             packageId:          selectedItem.id,
-            packageName:        `Partner (3rd): ${selectedItem.name}`,
+            packageName:        `Partner (3rd): ${selectedItem.name} (مع: ${customer.name} - ${customer.phone})`,
             category:           'gym',
             totalSessions:      1,
             remainingSessions:  1,
@@ -568,6 +586,7 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
           timestamp: now,
           startDate: calculatedStartDate,
           endDate:   calculatedEndDate,
+          descName,
           // Pass pre-generated IDs for idempotent replay
           generatedInvoiceIds: [generatedInvoiceId],
           generatedPackageId,
@@ -600,6 +619,7 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
         timestamp: now,
         startDate: calculatedStartDate,
         endDate:   calculatedEndDate,
+        descName,
         // Pass pre-generated IDs for idempotent replay
         generatedInvoiceIds: [generatedInvoiceId],
         generatedPackageId,
@@ -626,6 +646,20 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
   const effectivePrice = isEmployeeDiscount ? (selectedItem ? selectedItem.price * 0.70 : 0) : (selectedItem ? selectedItem.price : 0);
   const totalPaid = splitPayments.reduce((sum, p) => sum + p.amount, 0);
   const remainingBalance = selectedItem ? Math.max(0, effectivePrice - totalPaid) : 0;
+
+  const getTranslatedName = (name: string) => {
+    if (!name) return name;
+    if (language === 'ar') {
+      if (name.includes('Moisturizing Package')) return name.replace('Moisturizing Package', 'بكج الترطيب');
+      if (name.includes('Gaps Package')) return name.replace('Gaps Package', 'بكج الفراغات');
+      if (name.includes('Hayat Package')) return name.replace('Hayat Package', 'باقة حياة');
+    } else {
+      if (name.includes('بكج الترطيب')) return name.replace('بكج الترطيب', 'Moisturizing Package');
+      if (name.includes('بكج الفراغات')) return name.replace('بكج الفراغات', 'Gaps Package');
+      if (name.includes('باقة حياة')) return name.replace('باقة حياة', 'Hayat Package');
+    }
+    return name;
+  };
 
   // ── Step progress configuration ────────────────────────────────────────────
   // Maps each internal step key to a visible label and ordinal index.
@@ -760,7 +794,7 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
                     <div className="flex justify-between items-start">
                       <div className="text-start">
                         <span className="font-serif font-bold text-olive-dark group-hover:text-brand-olive transition-colors text-start block">
-                          {item.name}
+                          {getTranslatedName(item.name)}
                         </span>
                         <div className="flex items-center gap-2 mt-1.5 justify-start">
                           {(item as any).isCouple && (
@@ -786,7 +820,7 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
           {step === 'CUSTOMIZE_ITEM' && selectedItem && (
             <div className="animate-fade-in flex flex-col gap-5 text-start">
               <div className="text-start">
-                <h4 className="font-serif text-lg font-bold text-olive-dark mb-1">{selectedItem.name}</h4>
+                <h4 className="font-serif text-lg font-bold text-olive-dark mb-1">{getTranslatedName(selectedItem.name)}</h4>
                 <p className="text-xs text-gray-500 font-sans">
                   {language === 'ar' ? 'تخصيص تفاصيل الباقة قبل الدفع' : 'Customize package details before payment'}
                 </p>
@@ -930,7 +964,7 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
                       <select
                         value={newCustomerCountryCode}
                         onChange={(e) => setNewCustomerCountryCode(e.target.value)}
-                        className="text-xs p-2 border border-r-0 border-gray-200 rounded-l outline-none bg-gray-50 text-gray-700 w-[70px]"
+                        className="text-xs p-2 border border-r-0 border-gray-200 rounded-l outline-none bg-gray-50 text-gray-700 w-17.5"
                       >
                         <option value="+973">🇧🇭 +973</option>
                         <option value="+966">🇸🇦 +966</option>
@@ -1211,7 +1245,7 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
                               setCurrentSplitMethod(method);
                               setCurrentSplitAmount(remainingBalance.toFixed(3));
                             }}
-                            className="p-3 border border-gray-200 rounded-lg text-xs font-bold uppercase tracking-wider text-center text-gray-500 hover:border-brand-olive hover:text-brand-olive transition-all cursor-pointer font-sans leading-relaxed min-h-[50px] flex items-center justify-center"
+                            className="p-3 border border-gray-200 rounded-lg text-xs font-bold uppercase tracking-wider text-center text-gray-500 hover:border-brand-olive hover:text-brand-olive transition-all cursor-pointer font-sans leading-relaxed min-h-12.5 flex items-center justify-center"
                           >
                             {method === 'Card' ? (language === 'ar' ? t('pos.pay_card') : 'Card') :
                              method === 'BenefitPay' ? (language === 'ar' ? (isQatar ? 'فورا' : t('pos.pay_benefit')) : (isQatar ? 'Fawra' : 'BenefitPay')) :
@@ -1311,7 +1345,7 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
               <h3 className="font-serif text-2xl font-bold text-olive-dark mb-2">
                 {language === 'ar' ? 'تم تأكيد المعاملة بنجاح' : 'Transaction Confirmed'}
               </h3>
-              <p className="text-xs text-gray-500 text-center max-w-[250px] leading-relaxed">
+              <p className="text-xs text-gray-500 text-center max-w-62.5 leading-relaxed">
                 {language === 'ar'
                   ? 'تم تسجيل المعاملة في السحابة ورصيد الجلسات ومستجدات تقارير الوردية.'
                   : 'Committed to Firestore — the customer profile, package balance, and shift report are all updated.'}
@@ -1327,7 +1361,7 @@ export default function POSModal({ type, customer, staffName, staffId, branch, o
               <h3 className="font-serif text-2xl font-bold text-olive-dark mb-2">
                 {language === 'ar' ? 'تم الحفظ محلياً' : 'Saved Offline'}
               </h3>
-              <p className="text-xs text-gray-500 text-center max-w-[260px] leading-relaxed">
+              <p className="text-xs text-gray-500 text-center max-w-65 leading-relaxed">
                 {language === 'ar'
                   ? 'لا يوجد اتصال بالإنترنت. تم حفظ المعاملة على الجهاز وستُرسل تلقائياً عند عودة الاتصال.'
                   : 'No internet connection. The transaction is saved locally and will sync automatically when the connection is restored.'}

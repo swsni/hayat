@@ -126,17 +126,17 @@ export default function CafeBaristaPOS({ onClose, language, onCheckout }: Props)
         
         {/* Left: Menu */}
         <div className="flex-1 flex flex-col bg-gray-50 border-r border-gray-200">
-          <div className="p-4 border-b border-gray-200 bg-white flex justify-between items-center min-h-[64px]">
+          <div className="p-4 border-b border-gray-200 bg-white flex justify-between items-center min-h-16">
             <h2 className="text-xl lg:text-2xl font-bold text-gray-800">{language === 'ar' ? 'نظام نقاط البيع' : 'POS System'}</h2>
             <div className="flex gap-3">
               <button 
                 onClick={() => setShowCustomModal(true)} 
-                className="flex items-center gap-2 px-4 py-2 bg-[#7d834e] text-white rounded-lg font-bold hover:bg-[#6c7143] transition-colors min-h-[44px]"
+                className="flex items-center gap-2 px-4 py-2 bg-[#7d834e] text-white rounded-lg font-bold hover:bg-[#6c7143] transition-colors min-h-11"
               >
                 <Edit3 className="w-5 h-5" />
                 {language === 'ar' ? 'منتج مخصص' : 'Custom Item'}
               </button>
-              <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center">
+              <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg min-h-11 min-w-11 flex items-center justify-center">
                 <X className="w-7 h-7" />
               </button>
             </div>
@@ -145,7 +145,7 @@ export default function CafeBaristaPOS({ onClose, language, onCheckout }: Props)
           <div className="flex overflow-x-auto gap-3 p-4 bg-white border-b border-gray-100 shrink-0 no-scrollbar items-center">
             <button 
               onClick={() => setActiveCategory('all')}
-              className={`px-5 py-3 rounded-xl whitespace-nowrap font-bold text-lg transition-colors min-h-[44px] ${activeCategory === 'all' ? 'bg-[#7d834e] text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              className={`px-5 py-3 rounded-xl whitespace-nowrap font-bold text-lg transition-colors min-h-11 ${activeCategory === 'all' ? 'bg-[#7d834e] text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
               {language === 'ar' ? 'الكل' : 'All'}
             </button>
@@ -153,7 +153,7 @@ export default function CafeBaristaPOS({ onClose, language, onCheckout }: Props)
               <button 
                 key={c.id}
                 onClick={() => setActiveCategory(c.id!)}
-                className={`px-5 py-3 rounded-xl whitespace-nowrap font-bold text-lg transition-colors min-h-[44px] ${activeCategory === c.id ? 'bg-[#7d834e] text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                className={`px-5 py-3 rounded-xl whitespace-nowrap font-bold text-lg transition-colors min-h-11 ${activeCategory === c.id ? 'bg-[#7d834e] text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
               >
                 {c.name}
               </button>
@@ -166,7 +166,7 @@ export default function CafeBaristaPOS({ onClose, language, onCheckout }: Props)
                 <button 
                   key={item.id} 
                   onClick={() => addToCart(item)}
-                  className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:border-[#7d834e] hover:shadow-md transition-all text-left flex flex-col h-full min-h-[100px] active:scale-95"
+                  className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:border-[#7d834e] hover:shadow-md transition-all text-left flex flex-col h-full min-h-25 active:scale-95"
                 >
                   <div className="flex-1">
                     <h3 className="font-bold text-lg text-gray-800 leading-tight">{item.name}</h3>
@@ -179,8 +179,8 @@ export default function CafeBaristaPOS({ onClose, language, onCheckout }: Props)
         </div>
 
         {/* Right: Cart */}
-        <div className="w-full md:w-[400px] lg:w-[450px] bg-white flex flex-col border-t md:border-t-0 md:border-l border-gray-200 shrink-0">
-          <div className="p-4 lg:p-5 border-b border-gray-200 bg-gray-50/50 min-h-[64px] flex items-center">
+        <div className="w-full md:w-100 lg:w-112.5 bg-white flex flex-col border-t md:border-t-0 md:border-l border-gray-200 shrink-0">
+          <div className="p-4 lg:p-5 border-b border-gray-200 bg-gray-50/50 min-h-16 flex items-center">
             <h3 className="font-bold text-lg lg:text-xl text-gray-800 flex items-center gap-2">
               <ShoppingBag className="w-6 h-6" />
               {language === 'ar' ? 'الطلب الحالي' : 'Current Order'}
@@ -201,9 +201,9 @@ export default function CafeBaristaPOS({ onClose, language, onCheckout }: Props)
                     <p className="text-sm text-[#7d834e] font-black">{(item.price * item.quantity).toFixed(3)}</p>
                   </div>
                   <div className="flex items-center gap-4 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm">
-                    <button onClick={() => updateQty(item.id, -1)} className="text-gray-500 hover:text-red-500 p-1 min-h-[36px] min-w-[36px] flex items-center justify-center bg-gray-50 rounded-lg active:bg-gray-100"><Minus className="w-5 h-5" /></button>
+                    <button onClick={() => updateQty(item.id, -1)} className="text-gray-500 hover:text-red-500 p-1 min-h-9 min-w-9 flex items-center justify-center bg-gray-50 rounded-lg active:bg-gray-100"><Minus className="w-5 h-5" /></button>
                     <span className="font-bold text-xl w-6 text-center">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.id, 1)} className="text-gray-500 hover:text-green-500 p-1 min-h-[36px] min-w-[36px] flex items-center justify-center bg-gray-50 rounded-lg active:bg-gray-100"><Plus className="w-5 h-5" /></button>
+                    <button onClick={() => updateQty(item.id, 1)} className="text-gray-500 hover:text-green-500 p-1 min-h-9 min-w-9 flex items-center justify-center bg-gray-50 rounded-lg active:bg-gray-100"><Plus className="w-5 h-5" /></button>
                   </div>
                 </div>
               ))
@@ -248,7 +248,7 @@ export default function CafeBaristaPOS({ onClose, language, onCheckout }: Props)
             <button 
               onClick={handleCheckout}
               disabled={cart.length === 0}
-              className="w-full bg-[#7d834e] text-white font-black text-xl py-5 rounded-2xl hover:bg-[#6c7143] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:scale-95 transition-all min-h-[64px]"
+              className="w-full bg-[#7d834e] text-white font-black text-xl py-5 rounded-2xl hover:bg-[#6c7143] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:scale-95 transition-all min-h-16"
             >
               {language === 'ar' ? 'متابعة الدفع' : 'Proceed to Payment'}
             </button>
@@ -261,7 +261,7 @@ export default function CafeBaristaPOS({ onClose, language, onCheckout }: Props)
             <form onSubmit={handleAddCustomItem} className="bg-white p-6 rounded-2xl shadow-2xl w-[90%] max-w-sm animate-fade-in">
               <div className="flex justify-between items-center mb-5">
                 <h3 className="text-xl font-bold text-gray-800">{language === 'ar' ? 'إضافة منتج مخصص' : 'Add Custom Item'}</h3>
-                <button type="button" onClick={() => setShowCustomModal(false)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center">
+                <button type="button" onClick={() => setShowCustomModal(false)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg min-h-11 min-w-11 flex items-center justify-center">
                   <X className="w-6 h-6" />
                 </button>
               </div>
@@ -274,7 +274,7 @@ export default function CafeBaristaPOS({ onClose, language, onCheckout }: Props)
                     required
                     value={customName}
                     onChange={(e) => setCustomName(e.target.value)}
-                    className="w-full p-4 text-lg bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#7d834e] outline-none min-h-[52px]"
+                    className="w-full p-4 text-lg bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#7d834e] outline-none min-h-13"
                     placeholder={language === 'ar' ? 'مثال: كيكة شوكولاتة' : 'e.g., Chocolate Cake'}
                     autoFocus
                   />
@@ -287,7 +287,7 @@ export default function CafeBaristaPOS({ onClose, language, onCheckout }: Props)
                     required
                     value={customPrice}
                     onChange={(e) => setCustomPrice(e.target.value)}
-                    className="w-full p-4 text-lg bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#7d834e] outline-none min-h-[52px] text-left"
+                    className="w-full p-4 text-lg bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#7d834e] outline-none min-h-13 text-left"
                     dir="ltr"
                     placeholder="0.000"
                   />
@@ -296,7 +296,7 @@ export default function CafeBaristaPOS({ onClose, language, onCheckout }: Props)
               
               <button 
                 type="submit"
-                className="w-full mt-6 bg-[#7d834e] text-white font-bold text-lg py-4 rounded-xl hover:bg-[#6c7143] shadow-md active:scale-95 transition-all min-h-[52px]"
+                className="w-full mt-6 bg-[#7d834e] text-white font-bold text-lg py-4 rounded-xl hover:bg-[#6c7143] shadow-md active:scale-95 transition-all min-h-13"
               >
                 {language === 'ar' ? 'إضافة للطلب' : 'Add to Order'}
               </button>

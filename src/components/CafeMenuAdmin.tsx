@@ -29,9 +29,9 @@ export default function CafeMenuAdmin({ categories, items, triggerToast }: CafeM
 
   // Category Actions
   const handleSaveCategory = async () => {
-    const catName = editingCategory?.name;
-    const nameAr = typeof catName === 'object' ? catName?.ar : catName;
-    const nameEn = typeof catName === 'object' ? catName?.en : catName;
+    const catName: any = editingCategory?.name;
+    const nameAr = typeof catName === 'object' && catName ? catName.ar : catName;
+    const nameEn = typeof catName === 'object' && catName ? catName.en : catName;
     if (!nameAr) {
       triggerToast(language === 'ar' ? 'الرجاء إدخال اسم الفئة' : 'Please enter category name', 'error');
       return;
@@ -90,8 +90,8 @@ export default function CafeMenuAdmin({ categories, items, triggerToast }: CafeM
 
   // Item Actions
   const handleSaveItem = async () => {
-    const itemName = editingItem?.name;
-    const itemNameStr = typeof itemName === 'object' ? (itemName?.ar || itemName?.en) : itemName;
+    const itemName: any = editingItem?.name;
+    const itemNameStr = typeof itemName === 'object' && itemName ? (itemName.ar || itemName.en) : itemName;
     if (!itemNameStr || !editingItem?.categoryId || editingItem.price === undefined) {
       triggerToast(language === 'ar' ? 'الرجاء تعبئة جميع الحقول المطلوبة' : 'Please fill all required fields', 'error');
       return;

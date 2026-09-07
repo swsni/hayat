@@ -1,0 +1,1273 @@
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+import http2 from "http2";
+import { getDb } from "./firebaseAdmin";
+import { isSafeCustomerId } from "../utils/helpers";
+
+export const isWebNotificationsEnabled = (): boolean => {
+  const raw = String(process.env.WEB_NOTIFICATIONS_ENABLED || "true").trim().toLowerCase();
+  return raw !== "false";
+};
+
+export const getWebNotificationRetentionDays = (): number => {
+  const raw = Number(process.env.WEB_NOTIFICATIONS_RETENTION_DAYS || "30");
+  return Number.isFinite(raw) ? Math.max(1, Math.floor(raw)) : 30;
+};
+
+// APNs HTTP/2 Persistent Connection Pool
+let apnsClient: http2.ClientHttp2Session | null = null;
+let apnsCertsLoaded = false;
+let apnsSignerCert: Buffer | null = null;
+let apnsSignerKey: Buffer | null = null;
+let apnsAuthMode: "none" | "certificate" | "token" = "none";
+let apnsProviderKeyId = "";
+let apnsProviderTeamId = "";
+let apnsProviderPrivateKey: string | null = null;
+let apnsProviderJwtCache: { token: string; expiresAtEpochSec: number } | null = null;
+let apnsPassTypeIdentifier = process.env.APPLE_PASS_TYPE_IDENTIFIER || process.env.APPLE_PASS_TYPE_ID || "pass.com.hayatbeauty.loyalty";
+const APNS_HOST = process.env.APPLE_APNS_HOST || "https://api.push.apple.com";
+
+export const getApnsDiagnostics = () => ({
+  host: APNS_HOST,
+  topic: apnsPassTypeIdentifier,
+  authMode: apnsAuthMode,
+  certLoaded: Boolean(apnsSignerCert),
+  keyLoaded: Boolean(apnsSignerKey),
+  tokenKeyLoaded: Boolean(apnsProviderPrivateKey),
+  tokenKeyIdConfigured: Boolean(apnsProviderKeyId),
+  tokenTeamIdConfigured: Boolean(apnsProviderTeamId),
+});
+
+const base64UrlEncode = (value: string | Buffer): string => {
+  return Buffer.from(value)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+};
+
+const loadApnsProviderTokenFromEnv = (): void => {
+  if (apnsProviderPrivateKey) return;
+
+  const keyFromEnv = process.env.APPLE_APNS_AUTH_KEY;
+  const keyPath = process.env.APPLE_APNS_AUTH_KEY_PATH;
+  const keyId = String(process.env.APPLE_APNS_KEY_ID || "").trim();
+  const teamId = String(process.env.APPLE_TEAM_ID || "").trim();
+
+  let privateKey = "";
+  if (keyFromEnv && keyFromEnv.trim()) {
+    privateKey = keyFromEnv.replace(/\\n/g, "\n").trim();
+  } else if (keyPath && fs.existsSync(keyPath)) {
+    privateKey = fs.readFileSync(keyPath, "utf8").trim();
+  }
+
+  if (!privateKey || !keyId || !teamId) {
+    return;
+  }
+
+  apnsProviderPrivateKey = privateKey;
+  apnsProviderKeyId = keyId;
+  apnsProviderTeamId = teamId;
+  apnsAuthMode = "token";
+};
+
+const getApnsProviderJwt = (): string | null => {
+  if (apnsAuthMode !== "token" || !apnsProviderPrivateKey || !apnsProviderKeyId || !apnsProviderTeamId) {
+    return null;
+  }
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (apnsProviderJwtCache && apnsProviderJwtCache.expiresAtEpochSec > nowSec + 60) {
+    return apnsProviderJwtCache.token;
+  }
+
+  const header = {
+    alg: "ES256",
+    kid: apnsProviderKeyId,
+  };
+  const payload = {
+    iss: apnsProviderTeamId,
+    iat: nowSec,
+  };
+
+  const encodedHeader = base64UrlEncode(JSON.stringify(header));
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+  const unsignedToken = `${encodedHeader}.${encodedPayload}`;
+
+  try {
+    const signer = crypto.createSign("SHA256");
+    signer.update(unsignedToken);
+    signer.end();
+    const signature = signer.sign(apnsProviderPrivateKey);
+    const signedToken = `${unsignedToken}.${base64UrlEncode(signature)}`;
+    apnsProviderJwtCache = {
+      token: signedToken,
+      expiresAtEpochSec: nowSec + (50 * 60),
+    };
+    return signedToken;
+  } catch (err) {
+    console.error("[APNs Push] Failed to sign APNs JWT token:", err);
+    return null;
+  }
+};
+
+const getApnsClient = (): http2.ClientHttp2Session | null => {
+  if (apnsClient && !apnsClient.destroyed) {
+    return apnsClient;
+  }
+
+  if (!apnsCertsLoaded) {
+    let certsDir = path.join(process.cwd(), 'certs');
+    let signerCertPath = path.join(certsDir, 'signerCert.pem');
+    let signerKeyPath = path.join(certsDir, 'signerKey.pem');
+    
+    if (!fs.existsSync(signerCertPath)) {
+      signerCertPath = path.join(__dirname, '..', 'certs', 'signerCert.pem');
+      signerKeyPath = path.join(__dirname, '..', 'certs', 'signerKey.pem');
+    }
+    
+    if (fs.existsSync(signerCertPath)) {
+      apnsSignerCert = fs.readFileSync(signerCertPath);
+      apnsSignerKey = fs.readFileSync(signerKeyPath);
+      apnsAuthMode = "certificate";
+      
+      try {
+        const cert = new crypto.X509Certificate(apnsSignerCert);
+        const subject = cert.subject;
+        const uidMatch = subject.match(/UID=([^,\n;]+)/i);
+        if (uidMatch) {
+          apnsPassTypeIdentifier = uidMatch[1].trim();
+        } else {
+          const commonNameMatch = subject.match(/CN=Pass\s+Type\s+ID:\s*([^,\n;]+)/i);
+          if (commonNameMatch) {
+            apnsPassTypeIdentifier = commonNameMatch[1].trim();
+          }
+        }
+      } catch (certError) {
+        // Ignore
+      }
+    }
+
+    loadApnsProviderTokenFromEnv();
+    apnsCertsLoaded = true;
+  }
+
+  if (apnsAuthMode === "none") {
+    console.error("[APNs Push] Missing APNs credentials. Provide signerCert/signerKey or APPLE_APNS_AUTH_KEY(_PATH)+APPLE_APNS_KEY_ID+APPLE_TEAM_ID.");
+    return null;
+  }
+
+  console.log(`[APNs Push] Initializing new HTTP/2 persistent connection to ${APNS_HOST}...`);
+  apnsClient = apnsAuthMode === "certificate"
+    ? http2.connect(APNS_HOST, {
+      cert: apnsSignerCert as Buffer,
+      key: apnsSignerKey as Buffer,
+      passphrase: process.env.APPLE_PASSPHRASE || ""
+    })
+    : http2.connect(APNS_HOST);
+
+  apnsClient.on('error', (err) => {
+    console.error("[APNs Push] Connection error:", err);
+    if (apnsClient) {
+      apnsClient.close();
+      apnsClient = null;
+    }
+  });
+
+  apnsClient.on('close', () => {
+    console.log("[APNs Push] Connection closed. Will gracefully reconnect on next push.");
+    apnsClient = null;
+  });
+
+  return apnsClient;
+};
+
+export type PushDispatchSummary = {
+  customerId: string;
+  serialNumber: string;
+  apnsHost: string;
+  apnsTopic: string;
+  registrations: number;
+  attempted: number;
+  sent: number;
+  failed: number;
+  clientReady: boolean;
+  reasons: string[];
+};
+
+export type FamilyPushDispatchSummary = {
+  requestedCustomerId: string;
+  targetCustomerIds: string[];
+  attempted: number;
+  sent: number;
+  failed: number;
+  registrations: number;
+  clientReady: boolean;
+  reasons: string[];
+  perCustomer: PushDispatchSummary[];
+};
+
+export type WebNotificationPayload = {
+  type: string;
+  title: string;
+  body: string;
+  url?: string;
+  metadata?: Record<string, unknown>;
+};
+
+const normalizeFamilyRootId = (candidate: any): string => {
+  if (candidate && typeof candidate.parentId === "string" && candidate.parentId.trim()) {
+    return candidate.parentId.trim();
+  }
+  if (candidate && typeof candidate.id === "string" && candidate.id.trim()) {
+    return candidate.id.trim();
+  }
+  return "";
+};
+
+export const resolveWalletPushTargetIds = async (requestedCustomerId: string): Promise<string[]> => {
+  const normalizedRequestedId = String(requestedCustomerId || "").trim();
+  if (!isSafeCustomerId(normalizedRequestedId)) return [];
+
+  const adminDb = getDb();
+  const targets = new Set<string>();
+  targets.add(normalizedRequestedId);
+
+  try {
+    const seedDoc = await adminDb.collection("customers").doc(normalizedRequestedId).get();
+    if (!seedDoc.exists) {
+      return Array.from(targets);
+    }
+
+    const seedData = seedDoc.data() || {};
+    const seedRecord = { id: seedDoc.id, ...seedData };
+    const familyRootId = normalizeFamilyRootId(seedRecord);
+    const seedPhone = typeof seedData.phone === "string" ? seedData.phone.trim() : "";
+
+    if (seedPhone) {
+      const samePhoneSnap = await adminDb
+        .collection("customers")
+        .where("phone", "==", seedPhone)
+        .get();
+
+      samePhoneSnap.forEach((docSnap) => {
+        const docData = docSnap.data() || {};
+        if (docData.isDeleted) return;
+        if (isSafeCustomerId(docSnap.id)) targets.add(docSnap.id);
+      });
+    }
+
+    if (familyRootId) {
+      const dependentsSnap = await adminDb
+        .collection("customers")
+        .where("parentId", "==", familyRootId)
+        .get();
+
+      dependentsSnap.forEach((docSnap) => {
+        const docData = docSnap.data() || {};
+        if (docData.isDeleted) return;
+        if (isSafeCustomerId(docSnap.id)) targets.add(docSnap.id);
+      });
+
+      if (isSafeCustomerId(familyRootId)) {
+        targets.add(familyRootId);
+      }
+    }
+  } catch (err) {
+    console.warn(`[Wallet Trigger] Could not resolve family routing for ${normalizedRequestedId}:`, err);
+  }
+
+  return Array.from(targets);
+};
+
+export const dispatchWalletPushForFamily = async (requestedCustomerId: string): Promise<FamilyPushDispatchSummary> => {
+  const targetCustomerIds = await resolveWalletPushTargetIds(requestedCustomerId);
+  const perCustomer: PushDispatchSummary[] = [];
+
+  for (const targetCustomerId of targetCustomerIds) {
+    perCustomer.push(await triggerPushNotification(targetCustomerId));
+  }
+
+  const aggregated = perCustomer.reduce(
+    (acc, item) => {
+      acc.attempted += item.attempted;
+      acc.sent += item.sent;
+      acc.failed += item.failed;
+      acc.registrations += item.registrations;
+      acc.clientReady = acc.clientReady || item.clientReady;
+      if (item.reasons.length > 0) {
+        acc.reasons.push(`[${item.customerId}] ${item.reasons.join(" | ")}`);
+      }
+      return acc;
+    },
+    {
+      requestedCustomerId,
+      targetCustomerIds,
+      attempted: 0,
+      sent: 0,
+      failed: 0,
+      registrations: 0,
+      clientReady: false,
+      reasons: [] as string[],
+      perCustomer,
+    }
+  );
+
+  return aggregated;
+};
+
+export const enqueueWebNotificationForFamily = async (
+  requestedCustomerId: string,
+  payload: WebNotificationPayload
+): Promise<void> => {
+  if (!isWebNotificationsEnabled()) return;
+
+  const targetCustomerIds = await resolveWalletPushTargetIds(requestedCustomerId);
+  if (targetCustomerIds.length === 0) return;
+
+  const adminDb = getDb();
+  const createdAt = new Date().toISOString();
+  await Promise.all(
+    targetCustomerIds.map((targetCustomerId) =>
+      adminDb.collection("web_notifications").add({
+        targetCustomerId,
+        requestedCustomerId,
+        type: payload.type,
+        title: payload.title,
+        body: payload.body,
+        url: payload.url || "/cafe",
+        metadata: payload.metadata || {},
+        createdAt,
+        isRead: false,
+      })
+    )
+  );
+};
+
+// Reusable helper to send APNs push notification for a customer
+export const triggerPushNotification = async (customerId: string) => {
+  const serialNumber = `member-${customerId}`;
+  const summary: PushDispatchSummary = {
+    customerId,
+    serialNumber,
+    apnsHost: APNS_HOST,
+    apnsTopic: apnsPassTypeIdentifier,
+    registrations: 0,
+    attempted: 0,
+    sent: 0,
+    failed: 0,
+    clientReady: false,
+    reasons: [],
+  };
+  const adminDb = getDb();
+
+  if (!customerId || typeof customerId !== "string") {
+    summary.reasons.push("Invalid or missing customerId");
+    return summary;
+  }
+  
+  // Update the wallet pass modified time
+  try {
+    await adminDb.collection("wallet_passes").doc(serialNumber).set({
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (err: any) {
+    summary.reasons.push(`Failed to update wallet_passes timestamp: ${err?.message || err}`);
+    return summary;
+  }
+  
+  let registrationsSnapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>;
+  try {
+    registrationsSnapshot = await adminDb.collection("wallet_device_registrations")
+      .where("serialNumber", "==", serialNumber)
+      .get();
+  } catch (err: any) {
+    summary.reasons.push(`Failed to query wallet_device_registrations: ${err?.message || err}`);
+    return summary;
+  }
+  summary.registrations = registrationsSnapshot.size;
+    
+  if (registrationsSnapshot.empty) {
+    console.log(`[APNs Push] No devices registered for customer ${customerId}`);
+    summary.reasons.push("No device registrations found for serial");
+    return summary;
+  }
+  
+  console.log(`[APNs Push] Found ${registrationsSnapshot.size} devices registered for customer ${customerId}. Preparing push...`);
+  
+  const client = getApnsClient();
+  if (!client) {
+    summary.reasons.push("APNs client unavailable (missing certs or connection error)");
+    return summary;
+  }
+  summary.clientReady = true;
+  
+  const pushPromises = registrationsSnapshot.docs.map(doc => {
+    return new Promise<void>((resolve) => {
+      const pushToken = doc.data().pushToken;
+      const registrationDocId = doc.id;
+
+      if (typeof pushToken !== "string" || !/^[a-fA-F0-9]{64}$/.test(pushToken)) {
+        summary.failed += 1;
+        summary.reasons.push(`Registration ${registrationDocId} has invalid pushToken format`);
+        resolve();
+        return;
+      }
+
+      summary.attempted += 1;
+      console.log(`[APNs Push] Dispatching push to device library identifier: ${doc.data().deviceLibraryIdentifier}`);
+      const requestHeaders: http2.OutgoingHttpHeaders = {
+        ':method': 'POST',
+        ':path': `/3/device/${pushToken}`,
+        'apns-push-type': 'background', // Required for Wallet passes
+        'apns-priority': '5',           // Required when push-type is background
+        'apns-topic': apnsPassTypeIdentifier,
+        'apns-expiration': '0',
+      };
+
+      if (apnsAuthMode === "token") {
+        const providerJwt = getApnsProviderJwt();
+        if (!providerJwt) {
+          summary.failed += 1;
+          summary.reasons.push(`Token ${pushToken.substring(0, 8)}... -> APNs provider JWT unavailable`);
+          resolve();
+          return;
+        }
+        requestHeaders.authorization = `bearer ${providerJwt}`;
+      }
+
+      const req = client.request(requestHeaders);
+
+      let statusCode = 0;
+      
+      req.on('response', (headers) => {
+        statusCode = Number(headers[':status'] || 0);
+        console.log(`[APNs Push] Response status for ${pushToken.substring(0, 8)}... : ${statusCode}`);
+      });
+
+      req.setEncoding('utf8');
+      let data = '';
+      let finalized = false;
+      const finalize = () => {
+        if (finalized) return;
+        finalized = true;
+        resolve();
+      };
+
+      req.setTimeout(15000, () => {
+        summary.failed += 1;
+        summary.reasons.push(`Token ${pushToken.substring(0, 8)}... -> timeout after 15000ms`);
+        req.close();
+        finalize();
+      });
+
+      req.on('data', (chunk) => { data += chunk; });
+      req.on('end', async () => {
+        if (statusCode === 200) {
+          summary.sent += 1;
+          console.log(`[APNs Push] Success for token ${pushToken.substring(0, 8)}...`);
+        } else {
+          summary.failed += 1;
+          let apnsReason = "unknown";
+          if (data) {
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed && typeof parsed.reason === "string") {
+                apnsReason = parsed.reason;
+              }
+            } catch {
+              // Keep default reason when body is not JSON.
+            }
+          }
+
+          const reasonText = data ? `${statusCode}: ${apnsReason} ${data}` : `${statusCode}: no-body`;
+          summary.reasons.push(`Token ${pushToken.substring(0, 8)}... -> ${reasonText}`);
+          console.log(`[APNs Push] Failed for token ${pushToken.substring(0, 8)}... : ${reasonText}`);
+
+          if (statusCode === 410 || apnsReason === "Unregistered" || apnsReason === "BadDeviceToken") {
+            try {
+              await adminDb.collection("wallet_device_registrations").doc(registrationDocId).delete();
+              summary.reasons.push(`Registration ${registrationDocId} removed after APNs reason ${apnsReason}`);
+            } catch (cleanupErr: any) {
+              summary.reasons.push(`Registration cleanup failed for ${registrationDocId}: ${cleanupErr?.message || cleanupErr}`);
+            }
+          }
+        }
+        finalize();
+      });
+      req.on('error', (err) => {
+        console.error(`[APNs Push] Request error for ${pushToken.substring(0, 8)}... :`, err);
+        summary.failed += 1;
+        summary.reasons.push(`Token ${pushToken.substring(0, 8)}... -> stream error: ${err.message}`);
+        finalize();
+      });
+      
+      req.write("{}"); // Empty payload for Wallet pushes
+      req.end();
+    });
+  });
+  
+  await Promise.all(pushPromises);
+  if (summary.sent === 0 && summary.attempted > 0 && summary.reasons.length === 0) {
+    summary.reasons.push("APNs returned no successful deliveries");
+  }
+  console.log(`[APNs Push] Summary for ${customerId}:`, summary);
+  return summary;
+};
+import crypto from "crypto";
+import fs from "fs";
+import path from "path";
+import { PKPass } from "passkit-generator";
+import { getDb } from "./firebaseAdmin";
+import { isFirebaseBearerAuthorized } from "./authService";
+import { 
+  resolveCustomerReferenceFromLink, 
+  getWalletPassLinkSigningSecret, 
+  getWalletPassLinkMaxAgeMs, 
+  loadPassJsonConfig, 
+  ensureHttpsUrl, 
+  normalizePassLocations, 
+  normalizeMaxDistance, 
+  buildCafeOrderLink 
+} from "./utils";
+import { isSafeCustomerReference } from "../utils/helpers";
+
+/**
+ * Generate a deterministic 10-digit numeric gate card number from a customer ID.
+ * Uses a simple hash to produce a consistent numeric value.
+ */
+function generateGateCardNumber(customerId: string): number {
+  let hash = 0;
+  const str = "HAYAT-GATE-" + customerId;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash + char) | 0; // Convert to 32bit integer
+  }
+  // Ensure positive 10-digit number (1000000000 to 2147483647)
+  const positiveHash = Math.abs(hash);
+  return positiveHash < 1000000000 ? positiveHash + 1000000000 : positiveHash;
+}
+
+export const handleWalletPass = async (req: any, res: any) => {
+  try {
+    const bodyCustomerId = String(req.body?.customerId || "").trim();
+    const queryCustomerId = String(req.query?.customerId || "").trim();
+    const internalAuthorizedFetch = Boolean(req.__walletInternalAuthorized);
+    let customerId = bodyCustomerId || queryCustomerId;
+    let customerName = req.body?.customerName || req.query?.customerName;
+
+    if (!internalAuthorizedFetch) {
+      const firebaseAuthorized = await isFirebaseBearerAuthorized(req);
+      if (!firebaseAuthorized) {
+        const resolved = resolveCustomerReferenceFromLink({
+          signedCustomerId: String(req.query?.cid || req.body?.cid || "").trim(),
+          signedTsRaw: String(req.query?.ts || req.body?.ts || "").trim(),
+          signedSignature: String(req.query?.sig || req.body?.sig || "").trim(),
+          legacyCustomerId: customerId,
+          allowLegacy: (process.env.WALLET_ALLOW_LEGACY_PASS_LINK || "true").toLowerCase() === "true",
+          secret: getWalletPassLinkSigningSecret(),
+          maxAgeMs: getWalletPassLinkMaxAgeMs(),
+        });
+
+        if (resolved.ok === false) {
+          return res.status(resolved.status).json({ error: resolved.error });
+        }
+
+        customerId = resolved.customerId;
+        if (resolved.resolvedVia === "legacy") {
+          console.warn(`[Wallet Pass] Legacy link accepted for customer ${customerId}.`);
+        }
+      }
+    }
+
+    if (!customerId || !isSafeCustomerReference(customerId)) {
+      return res.status(400).json({ error: "Missing or invalid customerId" });
+    }
+
+    // Initialize wallet pass display variables
+    let gymStatus = "لا يوجد عضوية جيم / No Gym";
+    let gymExpiryValue = "";
+    let totalSalonSessions = 0;
+    let salonStatus = "";
+
+    let walletBalance = 0;
+    let firestoreDataLoaded = false;
+    let gateCardNumber = 0;
+
+    try {
+      const adminDb = getDb();
+      
+      const custDoc = await adminDb.collection("customers").doc(customerId).get();
+      if (custDoc.exists) {
+        const custData = custDoc.data();
+        const firestoreName = typeof custData?.name === "string" ? custData.name.trim() : "";
+        customerName = firestoreName || (typeof customerName === "string" ? customerName.trim() : "") || "Member";
+        walletBalance = custData?.walletBalance || 0;
+        firestoreDataLoaded = true;
+        
+        // Get or generate gateCardNumber
+        if (custData?.gateCardNumber) {
+          gateCardNumber = custData.gateCardNumber;
+        } else {
+          gateCardNumber = generateGateCardNumber(customerId);
+          // Save the generated gateCardNumber to the customer profile
+          await adminDb.collection("customers").doc(customerId).update({ gateCardNumber });
+          console.log(`[Wallet Pass] Generated and saved gateCardNumber ${gateCardNumber} for customer ${customerId}`);
+        }
+        
+        console.log(`[Wallet Pass] Loaded customer ${customerId}: name="${customerName}", walletBalance=${walletBalance}, gateCardNumber=${gateCardNumber}`);
+      } else {
+        console.warn(`[Wallet Pass] Customer document NOT FOUND in Firestore for ID: ${customerId}. Using fallback name.`);
+        if (!customerName || (typeof customerName === "string" && !customerName.trim())) {
+          customerName = "Member";
+        }
+      }
+      
+      const packagesSnap = await adminDb.collection("customerPackages")
+        .where("customerId", "==", customerId)
+        .get();
+
+      const msList: any[] = [];
+      packagesSnap.forEach(d => {
+        msList.push({ id: d.id, ...d.data() });
+      });
+
+      console.log(`[Wallet Pass] Found ${msList.length} package(s) for customer ${customerId}`);
+
+      const activeGym = msList.find(p => p.category === 'gym' && p.isActive);
+      if (activeGym) {
+        const isFrozen = activeGym.isFrozen && activeGym.frozenUntil && new Date(activeGym.frozenUntil) > new Date();
+        if (isFrozen) {
+          gymStatus = `مجمد حتى ${activeGym.frozenUntil.split('T')[0]}`;
+          gymExpiryValue = activeGym.endDate; // keep the expiry value for the pass
+        } else if (activeGym.endDate) {
+          gymStatus = `نشط ينتهي في ${activeGym.endDate}`;
+          gymExpiryValue = activeGym.endDate;
+        } else {
+          gymStatus = "عضوية جيم نشطة / Active Gym";
+        }
+      }
+
+      const activeSalonPkgs = msList.filter(p => p.category === 'salon' && Number(p.remainingSessions) > 0 && p.isActive !== false);
+      if (activeSalonPkgs.length > 0) {
+        totalSalonSessions = activeSalonPkgs.reduce((acc, p) => acc + (Number(p.remainingSessions) || 0), 0);
+        salonStatus = activeSalonPkgs.map(p => `${p.packageName}: (${Number(p.remainingSessions)}/${Number(p.totalSessions)})`).join(", ");
+      }
+      console.log(`[Wallet Pass] Customer ${customerId} -> gym="${gymStatus}", salonSessions=${totalSalonSessions}`);
+    } catch (e) {
+      console.error(`[Wallet Pass] FAILED to query Firestore for customer ${customerId}. Pass will show defaults (Member / 0 sessions).`, e);
+    }
+
+    let certsDir = path.join(process.cwd(), 'certs');
+    let wwdrPath = path.join(certsDir, 'wwdr.pem');
+    let signerCertPath = path.join(certsDir, 'signerCert.pem');
+    let signerKeyPath = path.join(certsDir, 'signerKey.pem');
+
+    if (!fs.existsSync(wwdrPath) || !fs.existsSync(signerCertPath) || !fs.existsSync(signerKeyPath)) {
+      const altDir1 = path.join(__dirname, 'certs');
+      const altWwdr1 = path.join(altDir1, 'wwdr.pem');
+      if (fs.existsSync(altWwdr1)) {
+        certsDir = altDir1;
+        wwdrPath = altWwdr1;
+        signerCertPath = path.join(altDir1, 'signerCert.pem');
+        signerKeyPath = path.join(altDir1, 'signerKey.pem');
+      } else {
+        const altDir2 = './dist/certs';
+        const altWwdr2 = path.join(altDir2, 'wwdr.pem');
+        if (fs.existsSync(altWwdr2)) {
+          certsDir = altDir2;
+          wwdrPath = altWwdr2;
+          signerCertPath = path.join(altDir2, 'signerCert.pem');
+          signerKeyPath = path.join(altDir2, 'signerKey.pem');
+        }
+      }
+    }
+
+    if (!fs.existsSync(wwdrPath) || !fs.existsSync(signerCertPath) || !fs.existsSync(signerKeyPath)) {
+      return res.status(503).json({ 
+        error: "Certificates missing", 
+        message: `Please ensure wwdr.pem, signerCert.pem, and signerKey.pem are placed securely. Searched path: ${certsDir}`
+      });
+    }
+
+    const wwdr = fs.readFileSync(wwdrPath);
+    const signerCert = fs.readFileSync(signerCertPath);
+    const signerKey = fs.readFileSync(signerKeyPath);
+
+    let teamIdentifier = process.env.APPLE_TEAM_ID;
+    let passTypeIdentifier = process.env.APPLE_PASS_TYPE_IDENTIFIER || process.env.APPLE_PASS_TYPE_ID;
+
+    try {
+      const cert = new crypto.X509Certificate(signerCert);
+      const subject = cert.subject;
+
+      const uidMatch = subject.match(/UID=([^,\n;]+)/i);
+      if (uidMatch) {
+        passTypeIdentifier = uidMatch[1].trim();
+      } else {
+        const commonNameMatch = subject.match(/CN=Pass\s+Type\s+ID:\s*([^,\n;]+)/i);
+        if (commonNameMatch) {
+          passTypeIdentifier = commonNameMatch[1].trim();
+        }
+      }
+
+      const ouMatch = subject.match(/OU=([^,\n;]+)/i);
+      if (ouMatch) {
+        teamIdentifier = ouMatch[1].trim();
+      }
+      console.log(`[Apple Wallet Auto-Parse] Extracted from signerCert.pem -> PassTypeID: ${passTypeIdentifier}, TeamID: ${teamIdentifier}`);
+    } catch (certError) {
+      console.warn('[Apple Wallet Auto-Parse] Unable to parse signerCert.pem, falling back to ENV/defaults:', certError);
+    }
+
+    if (!teamIdentifier) teamIdentifier = "P9P7UNK8C4";
+    if (!passTypeIdentifier) passTypeIdentifier = "pass.com.hayatbeauty.loyalty";
+
+    let iconBuffer: Buffer;
+    let logoPath = path.join(process.cwd(), 'public', 'logo.png');
+    
+    if (!fs.existsSync(logoPath)) {
+      const altLogo1 = path.join(__dirname, 'public', 'logo.png');
+      const altLogo2 = path.join(process.cwd(), 'dist', 'logo.png');
+      const altLogo3 = './public/logo.png';
+      if (fs.existsSync(altLogo1)) logoPath = altLogo1;
+      else if (fs.existsSync(altLogo2)) logoPath = altLogo2;
+      else if (fs.existsSync(altLogo3)) logoPath = altLogo3;
+    }
+
+    let logoBuffer: Buffer;
+    try {
+      logoBuffer = fs.readFileSync(logoPath);
+    } catch {
+      logoBuffer = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+    }
+
+    let icon1xBuffer = logoBuffer;
+    let icon2xBuffer = logoBuffer;
+    let icon3xBuffer = logoBuffer;
+
+    const getIconPath = (name: string) => {
+      let p = path.join(process.cwd(), 'public', name);
+      if (!fs.existsSync(p)) p = path.join(__dirname, 'public', name);
+      if (!fs.existsSync(p)) p = path.join(process.cwd(), 'dist', name);
+      if (!fs.existsSync(p)) p = `./public/${name}`;
+      return fs.existsSync(p) ? p : null;
+    };
+
+    try {
+      const p1 = getIconPath('icon.png');
+      if (p1) icon1xBuffer = fs.readFileSync(p1);
+      const p2 = getIconPath('icon@2x.png');
+      if (p2) icon2xBuffer = fs.readFileSync(p2);
+      const p3 = getIconPath('icon@3x.png');
+      if (p3) icon3xBuffer = fs.readFileSync(p3);
+    } catch {}
+
+    const serialNumber = `member-${customerId}`;
+    let authToken = crypto.randomBytes(16).toString("hex");
+    
+    try {
+      const adminDb = getDb();
+      const passRef = adminDb.collection("wallet_passes").doc(serialNumber);
+      
+      authToken = await adminDb.runTransaction(async (transaction) => {
+        const passDoc = await transaction.get(passRef);
+        
+        if (passDoc.exists && passDoc.data()?.authenticationToken) {
+          const existingToken = passDoc.data()!.authenticationToken;
+          transaction.set(passRef, {
+            customerId: customerId,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+          return existingToken;
+        }
+        
+        const newToken = crypto.randomBytes(16).toString("hex");
+        transaction.set(passRef, {
+          authenticationToken: newToken,
+          customerId: customerId,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        return newToken;
+      });
+      
+      console.log(`[Wallet Pass] Auth token secured for ${serialNumber}`);
+    } catch (dbErr) {
+      console.warn("Could not save authentication token to Firestore:", dbErr);
+    }
+
+    const passJsonConfig = loadPassJsonConfig();
+    const webServiceURL = ensureHttpsUrl(
+      String(
+        passJsonConfig.webServiceURL
+        || process.env.APPLE_WALLET_WEBSERVICE_URL
+        || "https://hayat.beauty/api"
+      ),
+      "https://hayat.beauty/api"
+    );
+    const configuredLocations = normalizePassLocations(passJsonConfig.locations);
+
+    const pass = new PKPass(
+      {
+        "icon.png": icon1xBuffer,
+        "icon@2x.png": icon2xBuffer,
+        "icon@3x.png": icon3xBuffer,
+        "logo.png": logoBuffer,
+      },
+      {
+        wwdr,
+        signerCert,
+        signerKey,
+        signerKeyPassphrase: process.env.APPLE_PASSPHRASE || "",
+      },
+      {
+        formatVersion: 1,
+        passTypeIdentifier: passTypeIdentifier,
+        teamIdentifier: teamIdentifier,
+        organizationName: passJsonConfig.organizationName || "Hayat Beauty And Care",
+        logoText: passJsonConfig.logoText || "Hayat Beauty And Care",
+        description: passJsonConfig.description || "Hayat Beauty And Care Membership Pass",
+        serialNumber: serialNumber,
+        webServiceURL,
+        authenticationToken: authToken,
+        backgroundColor: passJsonConfig.backgroundColor || "rgb(125, 131, 78)",
+        foregroundColor: passJsonConfig.foregroundColor || "rgb(255, 255, 255)",
+        labelColor: passJsonConfig.labelColor || "rgb(238, 241, 232)"
+      } as any
+    );
+
+    pass.type = "storeCard";
+    
+    pass.primaryFields.push({
+      key: "member",
+      label: "MEMBER / العضوة",
+      value: customerName
+    });
+
+    pass.secondaryFields.push({
+      key: "gym",
+      label: "GYM MEMBERSHIP / الجيم",
+      value: gymStatus,
+      changeMessage: "تم تحديث اشتراك الجيم: %@"
+    });
+
+    pass.secondaryFields.push({
+      key: "id",
+      label: "MEMBER ID / الرقم",
+      value: customerId.substring(0, 8).toUpperCase()
+    });
+
+    pass.auxiliaryFields.push({
+      key: "salon",
+      label: "SALON SESSIONS / جلسات الصالون",
+      value: totalSalonSessions > 0 ? `${totalSalonSessions} جلسة متبقية` : "لا يوجد باقات نشطة",
+      changeMessage: "تم تحديث جلسات الصالون: %@"
+    });
+
+    pass.backFields.push({
+      key: "wallet_balance",
+      label: "STORE CREDIT / المحفظة",
+      value: `${walletBalance.toFixed(3)} BHD`,
+      changeMessage: "رصيد المحفظة الجديد: %@"
+    });
+
+    pass.backFields.push({
+      key: "disclaimer",
+      label: "Card Usage / استخدام البطاقة",
+      value: "This digital badge aggregates your live profile and memberships at Hayat Beauty And Care. Show this QR to check-in or claim services.\nالعضوية مخصصة للاستخدام الشخصي لدى فرع حياة بيوتي آند كير."
+    });
+
+    if (gymExpiryValue) {
+      pass.backFields.push({
+        key: "gym_expiry",
+        label: "Gym Access Expires / انتهاء الجيم",
+        value: gymExpiryValue
+      });
+    }
+
+    if (totalSalonSessions > 0) {
+      pass.backFields.push({
+        key: "salon_details",
+        label: "Active Salon Packages / تفاصيل الصالون",
+        value: salonStatus
+      });
+    }
+
+    const cafeOrderLink = buildCafeOrderLink(customerId);
+    const cafeOrderLinkLabel = `${(process.env.PUBLIC_APP_URL || "https://hayat.beauty").replace(/\/+$/, "")}/cafe`;
+
+    pass.backFields.push({
+      key: "orderLink",
+      label: "اطلب قهوتك الآن / Order Coffee",
+      value: cafeOrderLink,
+      attributedValue: `<a href="${cafeOrderLink}">${cafeOrderLinkLabel}</a>`
+    });
+
+    // Use numeric gateCardNumber for the barcode so Wiegand QR readers can process it
+    const barcodeValue = gateCardNumber > 0 ? gateCardNumber.toString() : `HAYAT-${customerId}`;
+    pass.setBarcodes(barcodeValue);
+    console.log(`[Wallet Pass] Barcode set to: ${barcodeValue}`);
+
+    if (configuredLocations.length > 0) {
+      try {
+        pass.setLocations(...(configuredLocations as any[]));
+        console.log(`[Wallet Pass] Set ${configuredLocations.length} geofence location(s) on pass.`);
+      } catch (locErr: any) {
+        console.warn("[Wallet Pass] setLocations failed, skipping geofence:", locErr?.message);
+      }
+    }
+
+    const buffer = await pass.getAsBuffer();
+    
+    res.set("Content-Type", "application/vnd.apple.pkpass");
+    res.set("Content-Disposition", `attachment; filename="Hayat_Membership_${customerId}.pkpass"`);
+    res.set("Last-Modified", new Date().toUTCString());
+    res.send(buffer);
+    
+  } catch (error: any) {
+    console.error('Pass generation error:', error);
+    res.status(500).json({ error: "Pass Generation Failed", message: error.message });
+  }
+};
+import express from "express";
+import crypto from "crypto";
+import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
+import { getAuth as getAdminAuth } from "firebase-admin/auth";
+import { triggerPushNotification } from "./notificationsService";
+import { handleWalletPass } from "./walletService";
+
+function getDb() {
+  return getAdminFirestore();
+}
+
+export const walletRouter = express.Router();
+
+let hasWarnedMissingAdminKey = false;
+
+const extractBearerToken = (authorizationHeader: string | undefined): string => {
+  if (!authorizationHeader || !authorizationHeader.startsWith("Bearer ")) return "";
+  return authorizationHeader.slice("Bearer ".length).trim();
+};
+
+const isFirebaseAdminBearerAuthorized = async (req: express.Request): Promise<boolean> => {
+  try {
+    const token = extractBearerToken(typeof req.headers.authorization === "string" ? req.headers.authorization : undefined);
+    if (!token) return false;
+    const decoded = await getAdminAuth().verifyIdToken(token);
+    return decoded.admin === true;
+  } catch {
+    return false;
+  }
+};
+
+const isAdminRouteAuthorized = async (req: express.Request): Promise<boolean> => {
+  const configuredKey = process.env.WALLET_ADMIN_API_KEY;
+
+  if (configuredKey) {
+    const headerKey = req.headers["x-wallet-admin-key"];
+    const providedKey = typeof headerKey === "string"
+      ? headerKey
+      : (typeof req.query.adminKey === "string" ? req.query.adminKey : "");
+
+    if (providedKey) {
+      const provided = Buffer.from(providedKey);
+      const stored = Buffer.from(configuredKey);
+      if (provided.length === stored.length && crypto.timingSafeEqual(provided, stored)) {
+        return true;
+      }
+    }
+  }
+
+  const firebaseAdminAuthorized = await isFirebaseAdminBearerAuthorized(req);
+  if (firebaseAdminAuthorized) return true;
+
+  if (!configuredKey && !hasWarnedMissingAdminKey) {
+    console.warn("[Wallet Admin] WALLET_ADMIN_API_KEY is not set. Firebase admin bearer token is now required for admin routes.");
+    hasWarnedMissingAdminKey = true;
+  }
+
+  return false;
+};
+
+// Helper to authenticate requests from Apple Wallet.
+// Apple's PassKit Web Service sends the pass's authenticationToken in the
+// Authorization header as:  Authorization: ApplePass <token>
+// We validate it against the token we stored in Firestore when the pass was
+// first generated or last updated.
+const authenticateWalletRequest = async (req: express.Request, serialNumber: string): Promise<boolean> => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('ApplePass ')) {
+    console.warn(`[Wallet Auth] Missing or malformed Authorization header for serial: ${serialNumber}`);
+    return false;
+  }
+
+  const providedToken = authHeader.slice('ApplePass '.length).trim();
+  if (!providedToken) {
+    console.warn(`[Wallet Auth] Empty token for serial: ${serialNumber}`);
+    return false;
+  }
+
+  try {
+    const adminDb = getDb();
+    const passDoc = await adminDb.collection('wallet_passes').doc(serialNumber).get();
+
+    if (!passDoc.exists) {
+      console.warn(`[Wallet Auth] No pass record found for serial: ${serialNumber}`);
+      return false;
+    }
+
+    const storedToken: string | undefined = passDoc.data()?.authenticationToken;
+    if (!storedToken) {
+      console.warn(`[Wallet Auth] Pass record has no stored token for serial: ${serialNumber}`);
+      return false;
+    }
+
+    // Constant-time comparison prevents timing-based token enumeration attacks
+    const provided = Buffer.from(providedToken);
+    const stored   = Buffer.from(storedToken);
+    if (provided.length !== stored.length) return false;
+    return crypto.timingSafeEqual(provided, stored);
+  } catch (err) {
+    console.error(`[Wallet Auth] Firestore lookup failed for serial ${serialNumber}:`, err);
+    return false;
+  }
+};
+
+// 1. Register a Device
+// POST /v1/devices/:deviceLibraryIdentifier/registrations/:passTypeIdentifier/:serialNumber
+walletRouter.post("/v1/devices/:deviceLibraryIdentifier/registrations/:passTypeIdentifier/:serialNumber", async (req, res) => {
+  const { deviceLibraryIdentifier, passTypeIdentifier, serialNumber } = req.params;
+  console.log(`[Wallet] Registration POST hit for serial: ${serialNumber}`);
+  const pushToken = req.body.pushToken;
+  
+  if (!pushToken) {
+    res.status(400).send();
+    return;
+  }
+
+  if (!await authenticateWalletRequest(req, serialNumber)) {
+    res.status(401).send();
+    return;
+  }
+  
+  try {
+    const adminDb = getDb();
+    const registrationId = `${deviceLibraryIdentifier}_${serialNumber}`;
+    
+    // Check if already registered
+    const doc = await adminDb.collection("wallet_device_registrations").doc(registrationId).get();
+    const isNew = !(doc.exists && doc.data()?.pushToken === pushToken);
+
+    if (isNew) {
+      await adminDb.collection("wallet_device_registrations").doc(registrationId).set({
+        deviceLibraryIdentifier,
+        serialNumber,
+        passTypeIdentifier,
+        pushToken,
+        registeredAt: new Date().toISOString()
+      });
+      console.log(`[Registration] Saved new device token for serial: ${serialNumber}`);
+    }
+    
+    try {
+      const customerId = serialNumber.replace("member-", "");
+      await adminDb.collection("auditLogs").add({
+        customerId: customerId,
+        action: 'Apple Wallet',
+        description: 'تم إضافة بطاقة العضوية إلى محفظة أبل (Apple Wallet) بنجاح.',
+        timestamp: new Date().toISOString(),
+        staffName: 'System',
+        branch: 'System'
+      });
+    } catch (logErr) {
+      console.warn("Could not write wallet registration audit log", logErr);
+    }
+    
+    res.status(isNew ? 201 : 200).send();
+  } catch (error) {
+    console.error("Error registering device:", error);
+    res.status(500).send();
+  }
+});
+
+// 2. Unregister a Device
+// DELETE /v1/devices/:deviceLibraryIdentifier/registrations/:passTypeIdentifier/:serialNumber
+walletRouter.delete("/v1/devices/:deviceLibraryIdentifier/registrations/:passTypeIdentifier/:serialNumber", async (req, res) => {
+  const { deviceLibraryIdentifier, serialNumber } = req.params;
+  
+  if (!await authenticateWalletRequest(req, serialNumber)) {
+    res.status(401).send();
+    return;
+  }
+  
+  try {
+    const adminDb = getDb();
+    const registrationId = `${deviceLibraryIdentifier}_${serialNumber}`;
+    await adminDb.collection("wallet_device_registrations").doc(registrationId).delete();
+    
+    try {
+      const customerId = serialNumber.replace("member-", "");
+      await adminDb.collection("auditLogs").add({
+        customerId: customerId,
+        action: 'Apple Wallet',
+        description: 'تمت إزالة بطاقة العضوية من محفظة أبل (Apple Wallet).',
+        timestamp: new Date().toISOString(),
+        staffName: 'System',
+        branch: 'System'
+      });
+    } catch (logErr) {
+      console.warn("Could not write wallet unregistration audit log", logErr);
+    }
+
+    res.status(200).send();
+  } catch (error) {
+    console.error("Error unregistering device:", error);
+    res.status(500).send();
+  }
+});
+
+// 4. Log endpoint for Apple Wallet errors
+// POST /v1/log
+walletRouter.post("/v1/log", (req, res) => {
+  const logs = req.body?.logs || [];
+  console.error("[Apple Wallet Client Log]:", JSON.stringify(logs, null, 2));
+  res.status(200).send();
+});
+
+// 3. Get Serial Numbers for Updated Passes
+// GET /v1/devices/:deviceLibraryIdentifier/registrations/:passTypeIdentifier
+walletRouter.get("/v1/devices/:deviceLibraryIdentifier/registrations/:passTypeIdentifier", async (req, res) => {
+  const { deviceLibraryIdentifier, passTypeIdentifier } = req.params;
+  const passesUpdatedSince = req.query.passesUpdatedSince as string;
+
+  try {
+    const adminDb = getDb();
+    
+    // Get all serial numbers registered for this device
+    const registrationsSnapshot = await adminDb.collection("wallet_device_registrations")
+      .where("deviceLibraryIdentifier", "==", deviceLibraryIdentifier)
+      .where("passTypeIdentifier", "==", passTypeIdentifier)
+      .get();
+      
+    if (registrationsSnapshot.empty) {
+      res.status(204).send();
+      return;
+    }
+
+    const serialNumbers: string[] = [];
+    let latestUpdateEpochSec = 0;
+
+    // Apple sends passesUpdatedSince as a Unix timestamp string (e.g. "1744123456").
+    // Normalise to a Date object for comparison — support both Unix timestamps and
+    // ISO 8601 strings so that existing registrations keep working.
+    const sinceDate: Date | null = (() => {
+      if (!passesUpdatedSince) return null;
+      const asNumber = Number(passesUpdatedSince);
+      if (!isNaN(asNumber) && passesUpdatedSince.length <= 13) {
+        // Unix seconds (≤10 digits) or milliseconds (13 digits)
+        return new Date(asNumber > 1e10 ? asNumber : asNumber * 1000);
+      }
+      // Fallback: treat as ISO 8601
+      const d = new Date(passesUpdatedSince);
+      return isNaN(d.getTime()) ? null : d;
+    })();
+
+    // Check the updatedAt of each pass
+    for (const doc of registrationsSnapshot.docs) {
+      const sn = doc.data().serialNumber;
+      const passDoc = await adminDb.collection("wallet_passes").doc(sn).get();
+      if (passDoc.exists) {
+        const passData = passDoc.data();
+        const passUpdatedAtRaw = passData?.updatedAt || "2000-01-01T00:00:00Z";
+        const passUpdatedDate = new Date(passUpdatedAtRaw);
+        const passUpdatedEpochSec = Math.floor(passUpdatedDate.getTime() / 1000);
+
+        // If the pass was updated after the given tag (or no tag provided)
+        if (!sinceDate || passUpdatedDate > sinceDate) {
+          serialNumbers.push(sn);
+        }
+
+        // Track the latest update epoch
+        if (passUpdatedEpochSec > latestUpdateEpochSec) {
+          latestUpdateEpochSec = passUpdatedEpochSec;
+        }
+      }
+    }
+
+    if (serialNumbers.length === 0) {
+      res.status(204).send();
+      return;
+    }
+
+    // Apple expects lastUpdated as a Unix timestamp STRING (e.g. "1744123456").
+    // The device stores this and sends it back as passesUpdatedSince on next sync.
+    const lastUpdatedTimestamp = String(latestUpdateEpochSec || Math.floor(Date.now() / 1000));
+
+    res.status(200).json({
+      lastUpdated: lastUpdatedTimestamp,
+      serialNumbers: serialNumbers
+    });
+  } catch (error) {
+    console.error("Error getting serial numbers:", error);
+    res.status(500).send();
+  }
+});
+
+// 5. Trigger Update for All Customers
+// GET /v1/admin/trigger-all-updates
+walletRouter.get("/v1/admin/trigger-all-updates", async (req, res) => {
+  if (!await isAdminRouteAuthorized(req)) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const adminDb = getDb();
+    const snap = await adminDb.collection("wallet_device_registrations").get();
+    
+    const customerIds = new Set<string>();
+    snap.docs.forEach(doc => {
+      const data = doc.data();
+      if (data.serialNumber && data.serialNumber.startsWith('member-')) {
+        const customerId = data.serialNumber.replace('member-', '');
+        customerIds.add(customerId);
+      }
+    });
+
+    console.log(`[Admin Trigger] Found ${customerIds.size} unique customers to update.`);
+
+    // Process updates synchronously so container doesn't freeze
+    for (const id of customerIds) {
+      try {
+        await triggerPushNotification(id);
+      } catch (e) {
+        console.error(`[Admin Trigger] Failed to update customer ${id}:`, e);
+      }
+      await new Promise(resolve => setTimeout(resolve, 500)); // Sleep 500ms
+    }
+
+    res.status(200).json({ status: "completed", customersCount: customerIds.size });
+  } catch (error) {
+    console.error("Error triggering mass update:", error);
+    res.status(500).json({ error: "Mass update failed." });
+  }
+});
+
+// 6. Get Updated Pass
+// GET /v1/passes/:passTypeIdentifier/:serialNumber
+walletRouter.get("/v1/passes/:passTypeIdentifier/:serialNumber", async (req, res) => {
+  const { serialNumber } = req.params;
+
+  if (!await authenticateWalletRequest(req, serialNumber)) {
+    res.status(401).send();
+    return;
+  }
+
+  const customerId = serialNumber.replace("member-", "");
+  req.query.customerId = customerId;
+  (req as any).__walletInternalAuthorized = true;
+
+  return handleWalletPass(req, res);
+});

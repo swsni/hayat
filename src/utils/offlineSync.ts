@@ -171,7 +171,7 @@ class OfflineSyncService {
           primaryCustomerId: customer.id,
           amount: payment.amount,
           paymentMethod: payment.method,
-          description: selectedItem.name,
+          description: action.payload.descName || selectedItem.name,
           createdAt: now,
           branch,
           staffName,
@@ -184,7 +184,14 @@ class OfflineSyncService {
       // Save local primary packages
       const currentPackages = (await get<CustomerPackage[]>('local_packages')) || [];
       if (type !== 'cafe') {
-        if (selectedItem.name && selectedItem.name.includes('باقة حياة')) {
+        if (selectedItem.name && (
+            selectedItem.name.includes('باقة حياة') || 
+            selectedItem.name.includes('Hayat Package') ||
+            selectedItem.name.includes('بكج الترطيب') || 
+            selectedItem.name.includes('Moisturizing Package') ||
+            selectedItem.name.includes('بكج الفراغات') || 
+            selectedItem.name.includes('Gaps Package')
+        )) {
           const calcStartDate = action.payload.startDate || now.substring(0, 10);
           const isQatar = isQatarBranch(branch);
           const subPackages = expandHayatPackage(
@@ -194,7 +201,8 @@ class OfflineSyncService {
             now,
             calcStartDate,
             isQatar,
-            generatedPackageId
+            generatedPackageId,
+            selectedItem.name
           );
           currentPackages.push(...subPackages);
         } else {
@@ -202,7 +210,7 @@ class OfflineSyncService {
             id: generatedPackageId,
             customerId: customer.id,
             packageId: selectedItem.id,
-            packageName: selectedItem.name,
+            packageName: action.payload.descName || selectedItem.name,
             category: type,
             totalSessions: selectedItem.sessions,
             remainingSessions: selectedItem.sessions,
@@ -223,7 +231,7 @@ class OfflineSyncService {
         id: generatedLogId,
         customerId: customer.id,
         action: 'Purchase',
-        description: `Purchased ${selectedItem.name} (${selectedItem.price} ${currency}) via ${action.payload.splitPayments.map((p:any) => p.method).join(' & ')}`,
+        description: `Purchased ${action.payload.descName || selectedItem.name} (${selectedItem.price} ${currency}) via ${action.payload.splitPayments.map((p:any) => p.method).join(' & ')}`,
         timestamp: now,
         staffName,
         staffId,
@@ -398,7 +406,7 @@ class OfflineSyncService {
               customerName: customer.name,
               amount: payment.amount,
               paymentMethod: payment.method,
-              description: selectedItem.name,
+              description: action.payload.descName || selectedItem.name,
               createdAt: timestamp,
               branch,
               staffName,
@@ -409,7 +417,15 @@ class OfflineSyncService {
 
           // 2. Client package registration
           if (type !== 'cafe') {
-            if (selectedItem.name && selectedItem.name.includes('باقة حياة')) {
+            const pkgName = selectedItem.name;
+            if (pkgName && (
+              pkgName.includes('باقة حياة') || 
+              pkgName.includes('Hayat Package') ||
+              pkgName.includes('بكج الترطيب') || 
+              pkgName.includes('Moisturizing Package') ||
+              pkgName.includes('بكج الفراغات') || 
+              pkgName.includes('Gaps Package')
+            )) {
               const calcStartDate = action.payload.startDate || timestamp.substring(0, 10);
               const isQatar = isQatarBranch(branch);
               const subPackages = expandHayatPackage(
@@ -419,7 +435,8 @@ class OfflineSyncService {
                 timestamp,
                 calcStartDate,
                 isQatar,
-                generatedPackageId
+                generatedPackageId,
+                pkgName
               );
               
               subPackages.forEach((pkg) => {
@@ -433,7 +450,7 @@ class OfflineSyncService {
               batch.set(packageRef, {
                 customerId: customer.id,
                 packageId: selectedItem.id,
-                packageName: selectedItem.name,
+                packageName: action.payload.descName || selectedItem.name,
                 category: type,
                 totalSessions: selectedItem.sessions,
                 remainingSessions: selectedItem.sessions,
@@ -449,11 +466,10 @@ class OfflineSyncService {
           const logRef = doc(db, 'auditLogs', generatedLogId);
           const isQatarLog = branch.toLowerCase().includes('qatar') || branch.includes('قطر');
           const curr = isQatarLog ? 'ر.ق' : 'BHD';
-
           batch.set(logRef, {
             customerId: customer.id,
             action: 'Purchase',
-            description: `Purchased ${selectedItem.name} (${selectedItem.price} ${curr}) via ${splitPayments.map((p:any) => p.method).join(' & ')}`,
+            description: `Purchased "${action.payload.descName || selectedItem.name}" (${selectedItem.price} ${curr}) via ${action.payload.splitPayments.map((p:any) => p.method).join(' & ')}`,
             timestamp,
             staffName,
             staffId,

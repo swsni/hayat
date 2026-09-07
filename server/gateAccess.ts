@@ -42,14 +42,14 @@ export async function evaluateGateAccess(
     };
   }
 
-  if (customerData?.gymAccess === "staff" || customerData?.gymAccess === "family") {
+  if (customerData?.role === "staff" || customerData?.role === "family") {
     return {
       allowed: true,
       status: "GRANTED",
-      reason: `Bypass: ${customerData.gymAccess.toUpperCase()}`,
+      reason: `VIP Access`,
       customerId,
       customerName,
-      membershipType: customerData.gymAccess,
+      membershipType: customerData.role,
     };
   }
 
@@ -73,9 +73,25 @@ export async function evaluateGateAccess(
   const now = new Date();
   let hasValidAccess = false;
   let isFrozen = false;
+  let isFuture = false; // ✔️ متغير جديد لمعرفة إذا كان الاشتراك مستقبلياً
 
   for (const doc of packagesSnap.docs) {
     const pkg = doc.data();
+
+    // 1. فحص تاريخ البدء (هل الاشتراك سيبدأ في المستقبل؟)
+    if (pkg?.startDate) {
+      const startDate = new Date(pkg.startDate);
+      // التأكد أن بداية اليوم تُحسب من منتصف الليل
+      if (/^\d{4}-\d{2}-\d{2}$/.test(pkg.startDate.trim())) {
+        startDate.setHours(0, 0, 0, 0);
+      }
+      if (!Number.isNaN(startDate.getTime()) && startDate > now) {
+        isFuture = true;
+        continue; // تخطي هذه الباقة لأنها لم تبدأ بعد
+      }
+    }
+
+    // 2. فحص التجميد
     if (pkg?.isFrozen && pkg?.frozenUntil) {
       const frozenUntil = new Date(pkg.frozenUntil);
       if (!Number.isNaN(frozenUntil.getTime()) && frozenUntil > now) {
@@ -84,17 +100,26 @@ export async function evaluateGateAccess(
       }
     }
 
+    // 3. فحص الانتهاء
     const endDate = parseGateEndDate(pkg?.endDate);
     if (endDate && endDate < now) {
       continue;
     }
 
+    // إذا تخطت الباقة كل الفحوصات بنجاح، إذن لها أحقية الدخول
     hasValidAccess = true;
     break;
   }
 
   if (!hasValidAccess) {
-    const reason = isFrozen ? "Gym membership is currently frozen" : "Subscription is expired or no active gym membership";
+    // تحديد سبب الرفض بدقة
+    let reason = "Subscription is expired or no active gym membership";
+    if (isFuture && !isFrozen) {
+      reason = "Subscription has not started yet";
+    } else if (isFrozen) {
+      reason = "Gym membership is currently frozen";
+    }
+
     return {
       allowed: false,
       status: "DENIED",

@@ -121,7 +121,7 @@ export default function CustomerList({ onSelectCustomer, isAdmin = false }: Cust
           const q = query(
             collection(db, 'customers'),
             orderBy('createdAt', 'desc'),
-            limit(200)
+            limit(5000)
           );
           const snap = await getDocs(q);
           const termLower = term.toLowerCase();

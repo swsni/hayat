@@ -14,7 +14,7 @@ export default function StaffAdmin() {
     id: '',
     name: '',
     pin: '',
-    role: 'staff' as 'admin' | 'staff',
+    role: 'staff' as 'admin' | 'staff' | 'barista',
     branchPermissions: ['All'] as string[]
   });
   const [isEditingStaff, setIsEditingStaff] = useState(false);
@@ -219,7 +219,7 @@ export default function StaffAdmin() {
                     <select
                       id="staff-form-role"
                       value={staffForm.role}
-                      onChange={e => setStaffForm({ ...staffForm, role: e.target.value as 'admin' | 'staff' })}
+                      onChange={e => setStaffForm({ ...staffForm, role: e.target.value as 'admin' | 'staff' | 'barista' })}
                       disabled={actionLoading}
                       className="w-full text-xs border border-gray-200 outline-none rounded p-2 focus:border-brand-olive bg-white text-olive-dark disabled:cursor-not-allowed disabled:opacity-60"
                     >

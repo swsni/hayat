@@ -5,6 +5,7 @@ import LoginPIN from './components/LoginPIN';
 import BranchSelect from './components/BranchSelect';
 import Header from './components/Header';
 import AdminConfig from './components/AdminConfig';
+import StoreAdminConfig from './components/StoreAdminConfig';
 import CustomerList from './components/CustomerList';
 import CustomerProfile from './components/CustomerProfile';
 import POSModal from './components/POSModal';
@@ -33,7 +34,7 @@ export default function App() {
     };
   });
 
-  const [currentStep, setCurrentStep] = useState<'LOGIN' | 'BRANCH_SELECT' | 'DASHBOARD' | 'ADMIN_SUITE' | 'CUSTOMER_PROFILE'>(
+  const [currentStep, setCurrentStep] = useState<'LOGIN' | 'BRANCH_SELECT' | 'DASHBOARD' | 'ADMIN_SUITE' | 'STORE_ADMIN_SUITE' | 'CUSTOMER_PROFILE'>(
     () => session.isLoggedIn ? (session.activeBranch ? 'DASHBOARD' : 'BRANCH_SELECT') : 'LOGIN'
   );
 
@@ -63,11 +64,15 @@ export default function App() {
       const res = await fetch('/api/gate/open', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source: 'dashboard' })
+        body: JSON.stringify({
+          type: 'MANUAL_OPEN',
+          branch: session.activeBranch || 'Janabiya',
+          source: 'dashboard',
+        })
       });
       const data = await res.json();
       if (data.success) {
-        showToast(language === 'ar' ? 'تم أمر البوابة بالفتح بنجاح' : 'Gate open command sent', 'success');
+        showToast(language === 'ar' ? 'تم إرسال أمر فتح البوابة ✓' : 'Gate open command sent ✓', 'success');
       } else {
         showToast(data.message || (language === 'ar' ? 'حدث خطأ' : 'Error opening gate'), 'error');
       }
@@ -352,7 +357,7 @@ export default function App() {
       </div>
 
       {/* Sticky Header */}
-      {session.isLoggedIn && session.activeBranch && (currentStep === 'DASHBOARD' || currentStep === 'ADMIN_SUITE' || currentStep === 'CUSTOMER_PROFILE') && (
+      {session.isLoggedIn && session.activeBranch && (currentStep === 'DASHBOARD' || currentStep === 'ADMIN_SUITE' || currentStep === 'STORE_ADMIN_SUITE' || currentStep === 'CUSTOMER_PROFILE') && (
         <Header
           staffName={session.user?.name || 'Authorized Staff'}
           activeBranch={session.activeBranch}
@@ -362,7 +367,12 @@ export default function App() {
           onChangeBranch={triggerChangeBranch}
           onOpenAdmin={() => setCurrentStep('ADMIN_SUITE')}
           onSwitchProfile={handleSwitchProfile}
-          onOpenGate={isCafeBranchEnabled(session.activeBranch || '') ? handleOpenGate : undefined}
+          onOpenGate={
+            // Show the gate button ONLY for staff logged in at the Janabiya branch
+            session.activeBranch?.toLowerCase() === 'janabiya'
+              ? handleOpenGate
+              : undefined
+          }
           isOpeningGate={isOpeningGate}
           companyName={companyName}
         />
@@ -389,6 +399,24 @@ export default function App() {
             onBranchesUpdate={handleBranchesUpdate}
             companyName={companyName}
             onCompanyNameUpdate={handleCompanyNameUpdate}
+            onNavigateToCustomer={(customer) => {
+              setSelectedCustomer(customer);
+              setCurrentStep('CUSTOMER_PROFILE');
+            }}
+          />
+        )}
+
+        {currentStep === 'STORE_ADMIN_SUITE' && session.isLoggedIn && isAdminSession && (
+          <StoreAdminConfig
+            onBackToDashboard={() => setCurrentStep('DASHBOARD')}
+            availableBranches={availableBranches}
+            onBranchesUpdate={handleBranchesUpdate}
+            companyName={companyName}
+            onCompanyNameUpdate={handleCompanyNameUpdate}
+            onNavigateToCustomer={(customer) => {
+              setSelectedCustomer(customer);
+              setCurrentStep('CUSTOMER_PROFILE');
+            }}
           />
         )}
 
@@ -485,12 +513,20 @@ export default function App() {
                   {dateTimeStr || t('dashboard.syncing')}
                 </div>
                 {isAdminSession && (
-                  <button
-                    onClick={() => setCurrentStep('ADMIN_SUITE')}
-                    className="mt-2 text-[9px] uppercase font-bold text-brand-olive border border-brand-olive/30 px-2 py-1 rounded bg-white hover:bg-olive-light transition-colors font-sans"
-                  >
-                    {t('dashboard.open_admin')}
-                  </button>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => setCurrentStep('STORE_ADMIN_SUITE')}
+                      className="text-[9px] uppercase font-bold text-brand-olive border border-brand-olive/30 px-2 py-1 rounded bg-white hover:bg-olive-light transition-colors font-sans"
+                    >
+                      {language === 'ar' ? 'إعدادات المتجر' : 'Store Admin'}
+                    </button>
+                    <button
+                      onClick={() => setCurrentStep('ADMIN_SUITE')}
+                      className="text-[9px] uppercase font-bold text-brand-olive border border-brand-olive/30 px-2 py-1 rounded bg-white hover:bg-olive-light transition-colors font-sans"
+                    >
+                      {t('dashboard.open_admin')}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

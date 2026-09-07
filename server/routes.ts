@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getDb } from "./firebaseAdmin";
+import { getDb, getAuth as getAdminAuthHelper, ensureAdminInitialized } from "./firebaseAdmin";
 import { isTriggerPushAuthorized, isFirebaseBearerAuthorized } from "./authService";
 import { handleWalletPass } from "./walletService";
 import { 
@@ -20,6 +20,32 @@ import { walletRouter } from "./walletEndpoints";
 import { gateRouter } from "./gateEndpoints";
 
 export const apiRouter = Router();
+
+apiRouter.post("/auth/custom-token", async (req, res) => {
+  try {
+    console.log("[custom-token] Received request, body keys:", Object.keys(req.body || {}));
+    const { idToken } = req.body;
+    if (!idToken) {
+      console.error("[custom-token] Missing idToken in body:", JSON.stringify(req.body));
+      return res.status(400).json({ error: "Missing idToken" });
+    }
+    
+    console.log("[custom-token] idToken received, length:", idToken.length);
+    
+    // Use the helper that initializes admin and returns auth instance
+    const adminAuth = getAdminAuthHelper();
+    const decoded = await adminAuth.verifyIdToken(idToken);
+    console.log("[custom-token] Token verified, uid:", decoded.uid);
+    
+    // Make sure we mint the custom token for the verified UID
+    const customToken = await adminAuth.createCustomToken(decoded.uid);
+    console.log("[custom-token] Custom token created successfully");
+    return res.json({ customToken });
+  } catch (error: any) {
+    console.error("[custom-token] Error:", error?.message, error?.code, error?.stack);
+    return res.status(401).json({ error: "Invalid token", message: error?.message || "Unknown error" });
+  }
+});
 
 apiRouter.get("/notifications/debug/status", async (req, res) => {
   try {
@@ -254,6 +280,65 @@ apiRouter.get("/cafe/resolve-customer", async (req, res) => {
   } catch (error: any) {
     console.error("[Cafe Link] resolve-customer failed:", error);
     return res.status(500).json({ error: "Resolve failed", message: error.message });
+  }
+});
+
+apiRouter.post("/customer/profile", async (req, res) => {
+  try {
+    const phone = String(req.body?.phone || "").trim();
+    if (!phone) {
+      return res.status(400).json({ error: "Missing phone number" });
+    }
+
+    const adminDb = getDb();
+    
+    // Search for customer by phone
+    const customersSnap = await adminDb
+      .collection("customers")
+      .where("phone", "==", phone)
+      .limit(1)
+      .get();
+
+    if (customersSnap.empty) {
+      return res.status(404).json({ error: "Customer not found" });
+    }
+
+    const customerDoc = customersSnap.docs[0];
+    const customerData = customerDoc.data();
+    const customerId = customerDoc.id;
+
+    // Fetch customer packages
+    const packagesSnap = await adminDb
+      .collection("customerPackages")
+      .where("customerId", "==", customerId)
+      .get();
+
+    const packages = packagesSnap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    // Generate Apple Wallet Pass Link
+    const requestOrigin = `${req.protocol}://${req.get("host")}`;
+    const walletPassUrl = buildWalletPassDownloadLink(customerId, requestOrigin);
+
+    return res.json({
+      success: true,
+      customer: {
+        id: customerId,
+        name: customerData.name || "",
+        phone: customerData.phone || "",
+        walletBalance: customerData.walletBalance || 0,
+        cardNumber: customerData.cardNumber || "",
+        isDeleted: customerData.isDeleted || false,
+      },
+      packages,
+      walletPassUrl
+    });
+
+  } catch (error: any) {
+    console.error("[Customer Profile] failed:", error);
+    return res.status(500).json({ error: "Failed to fetch profile", message: error.message });
   }
 });
 

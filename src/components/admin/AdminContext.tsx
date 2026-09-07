@@ -103,7 +103,9 @@ const INITIAL_SALON_PACKAGES = [
   { name: 'Sidr with wash', price: 20.000, sessions: 1 },
   { name: 'Oil Massage without wash', price: 15.000, sessions: 1 },
   { name: 'Oil Massage with wash', price: 18.000, sessions: 1 },
-  { name: 'Green Mashat with wash', price: 30.000, sessions: 1 }
+  { name: 'Green Mashat with wash', price: 30.000, sessions: 1 },
+  { name: 'Moisturizing Package', price: 45.000, sessions: 1 },
+  { name: 'Gaps Package', price: 45.000, sessions: 1 }
 ];
 
 // Hardcoded initial list of gym memberships to seed as database baseline

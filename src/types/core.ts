@@ -9,7 +9,7 @@ export interface Staff {
   createdAt: string;
 }
 
-export type PaymentMethod = 'Card' | 'BenefitPay' | 'Cash' | 'Paid Previously' | 'Store Credit' | 'Split';
+export type PaymentMethod = 'Card' | 'BenefitPay' | 'Cash' | 'Paid Previously' | 'Store Credit' | 'Split' | 'Customer Wallet';
 
 export interface PaymentSplit {
   method: PaymentMethod;

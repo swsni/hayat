@@ -1,6 +1,8 @@
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { initializeFirestore, doc, getDocFromServer, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -17,6 +19,7 @@ const isFirebaseConfigured = !!(firebaseConfig && firebaseConfig.apiKey);
 let app;
 let db: Firestore | null = null;
 let auth: ReturnType<typeof getAuth> | null = null;
+let storage: FirebaseStorage | null = null;
 
 export async function ensureFirebaseAuth(): Promise<void> {
   if (!auth) {
@@ -62,6 +65,7 @@ if (isFirebaseConfigured) {
     db = initializeFirestore(app, {}) as Firestore;
 
     auth = getAuth(app);
+    storage = getStorage(app);
 
     // ── Anonymous Authentication ─────────────────────────────────────────────
     // Firestore security rules require request.auth != null on every collection.
@@ -99,7 +103,7 @@ if (isFirebaseConfigured) {
   console.info("Firebase is not fully configured yet. Running the application in secure offline/local fallback mode.");
 }
 
-export { db, auth, isFirebaseConfigured };
+export { db, auth, storage, isFirebaseConfigured };
 
 // Standardized Firestore Error Logging conforming strictly to FirestoreErrorInfo
 export enum OperationType {

@@ -139,9 +139,7 @@ export default function CoffeeSalesModal({ onClose, onProceedToCheckout }: Coffe
     }
   };
 
-  const [cart, setCart] = useState<any[]>([]);
-
-  const handleAddToCart = () => {
+  const handleProceed = () => {
     if (!selectedItem) return;
     if (selectedItem.hasFlavors && !flavor) {
       showToast(language === 'ar' ? 'الرجاء اختيار نكهة' : 'Please select a flavor', 'error');
@@ -150,39 +148,14 @@ export default function CoffeeSalesModal({ onClose, onProceedToCheckout }: Coffe
 
     const displayName = getLocalisedCafeName(selectedItem.name, language as 'ar' | 'en');
     const finalName = flavor ? `${displayName} - ${flavor}` : displayName;
-    
-    setCart(prev => [...prev, {
-      id: selectedItem.id + Date.now(), // unique cart item id
-      originalId: selectedItem.id,
+    const finalItem = {
+      ...selectedItem,
       name: finalName,
-      price: selectedItem.price,
+      price: selectedItem.price * quantity, // Send total price
+      originalPrice: selectedItem.price,
       quantity,
       flavor,
-    }]);
-
-    setSelectedItem(null);
-    setQuantity(1);
-    setFlavor('');
-    showToast(language === 'ar' ? 'تمت الإضافة للطلب' : 'Added to order');
-  };
-
-  const handleRemoveFromCart = (cartItemId: string) => {
-    setCart(prev => prev.filter(item => item.id !== cartItemId));
-  };
-
-  const handleCheckout = () => {
-    if (cart.length === 0) return;
-
-    const bundledName = cart.map(c => `${c.quantity}x ${c.name}`).join(' + ');
-    const bundlePrice = cart.reduce((sum, c) => sum + (c.price * c.quantity), 0);
-    
-    const finalItem = {
-      name: bundledName,
-      price: bundlePrice,
-      originalPrice: bundlePrice,
-      quantity: 1, // It's a bundle now
-      isCafeItem: true,
-      cartItems: cart
+      isCafeItem: true // identifier for POS checkout
     };
 
     onProceedToCheckout(finalItem);
@@ -350,51 +323,13 @@ export default function CoffeeSalesModal({ onClose, onProceedToCheckout }: Coffe
 
               {/* Proceed Button */}
               <button
-                onClick={handleAddToCart}
+                onClick={handleProceed}
                 className="px-6 py-3 bg-olive-dark hover:bg-olive-dark-hover text-white text-sm font-bold uppercase tracking-wider rounded-xl transition-colors shadow-md flex items-center gap-2"
               >
-                <span>{language === 'ar' ? 'إضافة' : 'Add'}</span>
+                <span>{t('cafe.add_to_order')}</span>
                 <span className="font-mono bg-white/20 px-2 py-0.5 rounded">
                   {(selectedItem.price * quantity).toFixed(3)} {t('common.currency')}
                 </span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Cart Summary (Always visible at bottom if cart has items) */}
-        {!selectedItem && cart.length > 0 && (
-          <div className="p-4 border-t border-olive-light bg-olive-soft/30 flex flex-col gap-3 max-h-48 overflow-y-auto">
-            <h4 className="text-xs uppercase font-bold text-gray-500 mb-1">{language === 'ar' ? 'الطلب الحالي' : 'Current Order'}</h4>
-            <div className="space-y-2 mb-2">
-              {cart.map(c => (
-                <div key={c.id} className="flex items-center justify-between bg-white p-2 rounded-lg border border-gray-200 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-brand-olive bg-brand-olive/10 px-2 py-0.5 rounded text-xs">{c.quantity}x</span>
-                    <span className="font-medium text-gray-800">{c.name}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="font-mono text-gray-600">{(c.price * c.quantity).toFixed(3)} {t('common.currency')}</span>
-                    <button onClick={() => handleRemoveFromCart(c.id)} className="text-red-400 hover:text-red-600">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-500 font-bold uppercase">{language === 'ar' ? 'المجموع' : 'Total'}</span>
-                <span className="font-mono font-bold text-lg text-brand-olive">
-                  {cart.reduce((sum, c) => sum + (c.price * c.quantity), 0).toFixed(3)} {t('common.currency')}
-                </span>
-              </div>
-              <button
-                onClick={handleCheckout}
-                className="px-8 py-3 bg-brand-olive hover:bg-olive-dark text-white text-sm font-bold uppercase tracking-wider rounded-xl transition-colors shadow-md"
-              >
-                {language === 'ar' ? 'إتمام الشراء' : 'Checkout'}
               </button>
             </div>
           </div>

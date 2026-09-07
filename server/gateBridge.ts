@@ -99,13 +99,32 @@ async function handleTerminalMessage(socket: net.Socket, msgStr: string) {
         customerData = docSnap.data();
         customerId = docSnap.id;
       } else {
-        // Fallback: search by gateCardNumber (numeric QR from wallet/printed card)
+        // ✔️ التعديل السحري: شبكة الصيد الشاملة للبحث
+        let found = false;
+        
+        // 1. البحث باستخدام gateCardNumber (للبطاقات المطبوعة والـ Wallet)
         if (!isNaN(Number(lookupId))) {
           const gateCardSnap = await db.collection("customers").where("gateCardNumber", "==", Number(lookupId)).limit(1).get();
           if (!gateCardSnap.empty) {
             customerData = gateCardSnap.docs[0].data();
             customerId = gateCardSnap.docs[0].id;
+            found = true;
             console.log(`[GATE WS] Found customer by gateCardNumber: ${lookupId} -> ${customerId}`);
+          }
+        }
+
+        // 2. البحث بنصوص أخرى احتياطياً
+        if (!found) {
+          const searchFields = ["phone", "cardNumber", "walletId", "nfcId"];
+          for (const field of searchFields) {
+            const querySnap = await db.collection("customers").where(field, "==", lookupId).limit(1).get();
+            if (!querySnap.empty) {
+              customerData = querySnap.docs[0].data();
+              customerId = querySnap.docs[0].id;
+              found = true;
+              console.log(`[GATE WS] Found customer by ${field}: ${lookupId} -> ${customerId}`);
+              break;
+            }
           }
         }
       }

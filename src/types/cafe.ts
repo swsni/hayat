@@ -43,7 +43,7 @@ export interface CafeCategory {
 export interface CafeMenuItem {
   id: string;
   categoryId: string;
-  name: string;
+  name: any;
   price: number;
   imageUrl?: string;
   isAvailable: boolean;

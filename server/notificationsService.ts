@@ -417,13 +417,17 @@ export const triggerPushNotification = async (customerId: string) => {
 
       summary.attempted += 1;
       console.log(`[APNs Push] Dispatching push to device library identifier: ${doc.data().deviceLibraryIdentifier}`);
+      
+      // إعطاء الإشعار مهلة 7 أيام في سيرفرات آبل في حال كان جوال العميل مغلقاً أو بدون إنترنت
+      const expirationDate = Math.floor(Date.now() / 1000) + (86400 * 7); 
+
       const requestHeaders: http2.OutgoingHttpHeaders = {
         ':method': 'POST',
         ':path': `/3/device/${pushToken}`,
         'apns-push-type': 'background', // Required for Wallet passes
         'apns-priority': '5',           // Required when push-type is background
         'apns-topic': apnsPassTypeIdentifier,
-        'apns-expiration': '0',
+        'apns-expiration': expirationDate.toString(), // ✔️ تم التعديل هنا
       };
 
       if (apnsAuthMode === "token") {

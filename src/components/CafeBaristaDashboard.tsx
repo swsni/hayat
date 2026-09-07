@@ -679,7 +679,7 @@ export default function CafeBaristaDashboard() {
               </span>
             </div>
             
-            <div className="p-4 flex-grow flex flex-col">
+            <div className="p-4 grow flex flex-col">
               <div className="flex flex-col gap-1.5 mb-4 border-b border-gray-100 pb-3">
                 {order.deliveryLocation && (
                   <div className="flex items-center gap-2 text-xs font-bold text-gray-600 bg-gray-50 p-1.5 rounded-lg w-fit">
@@ -841,7 +841,7 @@ export default function CafeBaristaDashboard() {
       )}
 
       {confirmationModal.isOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-120 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}></div>
           <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-3">{lang === 'ar' ? 'تأكيد العملية' : 'Confirm Action'}</h3>
@@ -869,7 +869,7 @@ export default function CafeBaristaDashboard() {
 
       {/* Z-Report Modal */}
       {showZReport && zReportData && (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 no-print-bg">
+        <div className="fixed inset-0 bg-black/60 z-100 flex items-center justify-center p-4 no-print-bg">
           <div className="bg-white rounded-2xl w-full max-w-md p-6 animate-fade-in shadow-2xl eod-modal-content print-header">
             <div className="text-center mb-6">
               <Receipt className="w-12 h-12 text-brand-olive mx-auto mb-2 hide-on-print" />

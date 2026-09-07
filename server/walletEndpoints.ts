@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { triggerPushNotification } from "./notificationsService";
+import { handleWalletPass } from "./walletService";
 
 function getDb() {
   return getAdminFirestore();
@@ -322,4 +323,19 @@ walletRouter.get("/v1/admin/trigger-all-updates", async (req, res) => {
   }
 });
 
-// The GET /v1/passes/:passTypeIdentifier/:serialNumber will be registered directly in server.ts
+// 6. Get Updated Pass
+// GET /v1/passes/:passTypeIdentifier/:serialNumber
+walletRouter.get("/v1/passes/:passTypeIdentifier/:serialNumber", async (req, res) => {
+  const { serialNumber } = req.params;
+
+  if (!await authenticateWalletRequest(req, serialNumber)) {
+    res.status(401).send();
+    return;
+  }
+
+  const customerId = serialNumber.replace("member-", "");
+  req.query.customerId = customerId;
+  (req as any).__walletInternalAuthorized = true;
+
+  return handleWalletPass(req, res);
+});

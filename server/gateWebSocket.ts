@@ -82,17 +82,49 @@ export function initGateWebSocketServer(port: number = 7788) {
             customerData = docSnap.data();
             customerId = docSnap.id;
           } else {
-            // Customer not found
-            await logGateAccess(db, {
-              customerId: "UNKNOWN",
-              customerName: "Unknown",
-              status: "DENIED",
-              reason: "Customer not found",
-              branch: "Unknown",
-              qrPayload
-            });
-            ws.send(JSON.stringify({ ret: "sendqrcode", result: true, access: 0, message: "Not Found" }));
-            return;
+            // ✔️ التعديل السحري: شبكة الصيد للبحث عن الـ gateCardNumber (الأرقام ذات 10 خانات)
+            let found = false;
+            
+            // 1. البحث بالأرقام (للبطاقات المطبوعة و Apple Wallet)
+            if (!isNaN(Number(lookupId))) {
+              const numericId = Number(lookupId);
+              const gateCardSnap = await db.collection("customers").where("gateCardNumber", "==", numericId).limit(1).get();
+              if (!gateCardSnap.empty) {
+                customerData = gateCardSnap.docs[0].data();
+                customerId = gateCardSnap.docs[0].id;
+                found = true;
+                console.log(`[GATE SDK] Found customer by gateCardNumber: ${numericId} -> ${customerId}`);
+              }
+            }
+
+            // 2. البحث بنصوص أخرى احتياطياً
+            if (!found) {
+              const searchFields = ["phone", "cardNumber", "walletId", "nfcId"];
+              for (const field of searchFields) {
+                const querySnap = await db.collection("customers").where(field, "==", lookupId).limit(1).get();
+                if (!querySnap.empty) {
+                  customerData = querySnap.docs[0].data();
+                  customerId = querySnap.docs[0].id;
+                  found = true;
+                  console.log(`[GATE SDK] Found customer by ${field}: ${lookupId} -> ${customerId}`);
+                  break;
+                }
+              }
+            }
+
+            if (!found) {
+              // Customer not found
+              await logGateAccess(db, {
+                customerId: "UNKNOWN",
+                customerName: "Unknown",
+                status: "DENIED",
+                reason: "Customer not found",
+                branch: "Unknown",
+                qrPayload
+              });
+              ws.send(JSON.stringify({ ret: "sendqrcode", result: true, access: 0, message: "Not Found" }));
+              return;
+            }
           }
 
           const decision = await evaluateGateAccess(db, customerId, customerData, "Unknown", qrPayload);

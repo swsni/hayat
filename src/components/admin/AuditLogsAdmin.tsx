@@ -4,9 +4,11 @@ import { db } from '../../firebase';
 import { collection, query, orderBy, limit, getDocs, where, Timestamp } from 'firebase/firestore';
 import { RefreshCw, History, Search, Calendar as CalendarIcon, User, Coffee, Dumbbell, Receipt } from 'lucide-react';
 import { AuditLog } from '../../types';
+import { useAdminContext } from './AdminContext';
 
-export default function AuditLogsAdmin() {
+export default function AuditLogsAdmin({ onNavigateToCustomer }: { onNavigateToCustomer?: (customer: any) => void }) {
   const { language } = useLanguage();
+  const { customersList } = useAdminContext();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -174,7 +176,21 @@ export default function AuditLogsAdmin() {
                      {log.customerName && (
                         <div className="text-xs text-gray-600 flex items-center gap-1.5">
                            <User className="w-3.5 h-3.5 text-gray-400" />
-                           <span className="font-semibold text-gray-800">{log.customerName}</span>
+                           {log.customerId ? (
+                             <button
+                               onClick={() => {
+                                 if (onNavigateToCustomer) {
+                                   const cust = customersList.find(c => c.id === log.customerId);
+                                   if (cust) onNavigateToCustomer(cust);
+                                 }
+                               }}
+                               className="font-semibold text-gray-800 hover:text-brand-olive hover:underline cursor-pointer transition-colors text-left"
+                             >
+                               {log.customerName}
+                             </button>
+                           ) : (
+                             <span className="font-semibold text-gray-800">{log.customerName}</span>
+                           )}
                            <span className="text-gray-400">({log.customerId})</span>
                         </div>
                      )}

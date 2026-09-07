@@ -18,18 +18,19 @@ import RecycleBinAdmin from './admin/RecycleBinAdmin';
 import CompanyAdmin from './admin/CompanyAdmin';
 import GateLogsAdmin from './admin/GateLogsAdmin';
 import AuditLogsAdmin from './admin/AuditLogsAdmin';
-
+import GymScheduleAdmin from './admin/GymScheduleAdmin';
 interface AdminConfigProps {
   onBackToDashboard: () => void;
   availableBranches: string[];
   onBranchesUpdate: (branches: string[]) => void;
   companyName: string;
   onCompanyNameUpdate: (newName: string) => void;
+  onNavigateToCustomer?: (customer: any) => void;
 }
 
-function AdminContent({ onBackToDashboard }: { onBackToDashboard: () => void }) {
+function AdminContent({ onBackToDashboard, onNavigateToCustomer }: { onBackToDashboard: () => void, onNavigateToCustomer?: (customer: any) => void }) {
   const { language, t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'staff' | 'packages' | 'gym' | 'company' | 'reports' | 'members' | 'recycleBin' | 'cafe' | 'gateLogs' | 'auditLogs'>('staff');
+  const [activeTab, setActiveTab] = useState<'staff' | 'packages' | 'gym' | 'gymSchedule' | 'company' | 'reports' | 'members' | 'recycleBin' | 'cafe' | 'gateLogs' | 'auditLogs'>('staff');
   
   const { 
     actionLoading, toast, dbSynced, staffList,
@@ -136,6 +137,12 @@ function AdminContent({ onBackToDashboard }: { onBackToDashboard: () => void }) 
             <Users className="w-4 h-4" /> <span className="font-sans">Members List</span>
           </button>
 
+          {!qatarBranch && (
+            <button onClick={() => setActiveTab('gymSchedule')} className={`flex items-center gap-2.5 p-3.5 rounded-xl text-sm font-semibold transition-all duration-200 ${activeTab === 'gymSchedule' ? 'bg-olive-dark text-white shadow-md' : 'bg-white text-gray-600 hover:bg-olive-light hover:text-olive-dark border border-transparent hover:border-brand-olive'}`}>
+              <Dumbbell className="w-4 h-4" /> <span className="font-sans">{language === 'ar' ? 'جدول النادي' : 'Gym Schedule'}</span>
+            </button>
+          )}
+
           <button onClick={() => setActiveTab('recycleBin')} className={`flex items-center gap-2.5 p-3.5 rounded-xl text-sm font-semibold transition-all duration-200 ${activeTab === 'recycleBin' ? 'bg-rose-600 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-rose-50 hover:text-rose-600 border border-transparent hover:border-rose-200'}`}>
             <Trash2 className="w-4 h-4" /> <span className="font-sans">Recycle Bin</span>
           </button>
@@ -174,11 +181,12 @@ function AdminContent({ onBackToDashboard }: { onBackToDashboard: () => void }) 
             />
           )}
           {activeTab === 'company' && <CompanyAdmin />}
-          {activeTab === 'reports' && <ReportsAdmin />}
+          {activeTab === 'reports' && <ReportsAdmin onNavigateToCustomer={onNavigateToCustomer} />}
           {activeTab === 'members' && <MembersAdmin />}
           {activeTab === 'gateLogs' && <GateLogsAdmin />}
-          {activeTab === 'auditLogs' && <AuditLogsAdmin />}
+          {activeTab === 'auditLogs' && <AuditLogsAdmin onNavigateToCustomer={onNavigateToCustomer} />}
           {activeTab === 'recycleBin' && <RecycleBinAdmin />}
+          {activeTab === 'gymSchedule' && <GymScheduleAdmin />}
 
         </div>
       </div>
@@ -304,7 +312,7 @@ export default function AdminConfig(props: AdminConfigProps) {
       companyName={props.companyName}
       onCompanyNameUpdate={props.onCompanyNameUpdate}
     >
-      <AdminContent onBackToDashboard={props.onBackToDashboard} />
+      <AdminContent onBackToDashboard={props.onBackToDashboard} onNavigateToCustomer={props.onNavigateToCustomer} />
     </AdminProvider>
   );
 }

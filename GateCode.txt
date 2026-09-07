@@ -1,0 +1,663 @@
+import express from "express";
+import { FieldValue } from "firebase-admin/firestore";
+import { ensureAdminInitialized, getDb } from "./firebaseAdmin";
+import { evaluateGateAccess } from "./gateAccess";
+
+
+export const gateRouter = express.Router();
+
+// Removed local gateSockets dependency since we use Cloud Bridge now
+
+// Middleware to secure gate endpoints using an API key
+// Middleware to secure hardware gate endpoints using an API key
+gateRouter.use("/scan", (req, res, next) => {
+  const expectedKey = process.env.GATE_API_KEY;
+  if (!expectedKey) {
+    return next(); // API key not configured, fallback to open access
+  }
+
+  const apiKey = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "") || req.query.apiKey || req.body?.apiKey;
+  if (apiKey !== expectedKey) {
+    return res.status(401).json({ error: "Unauthorized: Invalid API key" });
+  }
+
+  next();
+});
+
+// Middleware to secure wallet-verify endpoint using the same GATE_API_KEY
+gateRouter.use("/wallet-verify", (req, res, next) => {
+  const expectedKey = process.env.GATE_API_KEY;
+  if (!expectedKey) {
+    return next(); // API key not configured, fallback to open access
+  }
+
+  const apiKey =
+    req.headers["x-api-key"] ||
+    req.headers["authorization"]?.replace("Bearer ", "") ||
+    req.query.apiKey ||
+    req.body?.apiKey;
+
+  if (apiKey !== expectedKey) {
+    return res.status(401).json({ allowed: false, reason: "Unauthorized: Invalid API key" });
+  }
+
+  next();
+});
+
+/**
+ * POST /api/gate/wallet-verify
+ *
+ * Verifies whether a customer is allowed entry based on their Apple Wallet QR code.
+ *
+ * Request body:
+ *   { "qrCode": "<wallet QR payload>" }
+ *
+ * Response:
+ *   { "allowed": true,  "reason": "VIP Access" }
+ *   { "allowed": true,  "reason": "Active Gym Subscription" }
+ *   { "allowed": false, "reason": "Subscription Expired or Invalid" }
+ *   { "allowed": false, "reason": "Customer Not Found" }
+ */
+gateRouter.post("/wallet-verify", async (req, res) => {
+  try {
+    const rawCode = String(req.body?.qrCode || "").trim();
+
+    // ── 0. Early exit: ignore system ping / zero enrollid ─────────────────────
+    if (!rawCode || rawCode === "0") {
+      return res.status(200).json({ allowed: false, reason: "Ignored System Ping" });
+    }
+
+    const db = getDb();
+
+    // ── 1. Resolve customer ───────────────────────────────────────────────────
+    let customerData: FirebaseFirestore.DocumentData | null = null;
+    let customerId = "";
+
+    // Strip optional "HAYAT-" prefix (same convention as /scan)
+    let lookupId = rawCode.startsWith("HAYAT-") ? rawCode.replace("HAYAT-", "") : rawCode;
+
+    // Try direct document ID first (Firestore doc.get() doesn't support .select(),
+    // but we keep this fast path and only read from result what we need)
+    const directSnap = await db.collection("customers").doc(lookupId).get();
+    if (directSnap.exists) {
+      customerData = directSnap.data()!;
+      customerId = directSnap.id;
+    } else {
+      // Fallback: search by walletId, then gateCardNumber (numeric), then phone
+      // All fallback queries use .select() + .limit(1) for minimum latency
+      const walletIdSnap = await db
+        .collection("customers")
+        .where("walletId", "==", rawCode)
+        .select("role", "gymAccess")
+        .limit(1)
+        .get();
+
+      if (!walletIdSnap.empty) {
+        customerData = walletIdSnap.docs[0].data();
+        customerId = walletIdSnap.docs[0].id;
+      } else if (!isNaN(Number(lookupId))) {
+        const gateCardSnap = await db
+          .collection("customers")
+          .where("gateCardNumber", "==", Number(lookupId))
+          .select("role", "gymAccess")
+          .limit(1)
+          .get();
+
+        if (!gateCardSnap.empty) {
+          customerData = gateCardSnap.docs[0].data();
+          customerId = gateCardSnap.docs[0].id;
+        }
+      }
+
+      if (!customerData) {
+        // Last fallback: search by phone
+        const phoneSnap = await db
+          .collection("customers")
+          .where("phone", "==", lookupId)
+          .select("role", "gymAccess")
+          .limit(1)
+          .get();
+
+        if (!phoneSnap.empty) {
+          customerData = phoneSnap.docs[0].data();
+          customerId = phoneSnap.docs[0].id;
+        }
+      }
+    }
+
+    if (!customerData) {
+      console.log(`[wallet-verify] Customer not found for QR: ${rawCode}`);
+      return res.status(200).json({ allowed: false, reason: "Customer Not Found" });
+    }
+
+    // ── 2. VIP role check (staff / family) — immediate allow ─────────────────
+    const role = String(customerData.role || customerData.gymAccess || "member").toLowerCase().trim();
+
+    if (role === "staff" || role === "family") {
+      console.log(`[wallet-verify] VIP access granted for customer ${customerId} (role: ${role})`);
+      return res.status(200).json({ allowed: true, reason: "VIP Access" });
+    }
+
+    // ── 3. Member: fetch active gym packages (optimized: select + no limit
+    //       because a member could legitimately have multiple gym packages) ────
+    const packagesSnap = await db
+      .collection("customerPackages")
+      .where("customerId", "==", customerId)
+      .where("category", "==", "gym")
+      .where("isActive", "==", true)
+      .select("startDate", "endDate", "isFrozen", "frozenUntil")
+      .get();
+
+    if (packagesSnap.empty) {
+      console.log(`[wallet-verify] No active gym package for customer ${customerId}`);
+      return res.status(200).json({ allowed: false, reason: "Subscription Expired or Invalid" });
+    }
+
+    const now = new Date();
+    // ── ISO YYYY-MM-DD regex (FIXED) ─────────────────────────────────────────
+    const isoDateRe = /^\d{4}-\d{2}-\d{2}$/;
+
+    let hasValidSubscription = false;
+    let isCurrentlyFrozen = false;
+    let isFutureSubscription = false;
+
+    for (const doc of packagesSnap.docs) {
+      const pkg = doc.data();
+
+      // ── a) startDate check (Condition 4 in spec) ──────────────────────────
+      let hasStarted = true;
+      if (pkg.startDate) {
+        const startDate = new Date(
+          isoDateRe.test(String(pkg.startDate).trim())
+            ? `${pkg.startDate}T00:00:00.000`
+            : pkg.startDate
+        );
+        if (!isNaN(startDate.getTime()) && startDate > now) {
+          hasStarted = false;
+          isFutureSubscription = true;
+        }
+      }
+
+      // ── b) endDate check (Condition 5 in spec) ────────────────────────────
+      let isExpired = false;
+      if (pkg.endDate) {
+        const endDate = new Date(
+          isoDateRe.test(String(pkg.endDate).trim())
+            ? `${pkg.endDate}T23:59:59.999`
+            : pkg.endDate
+        );
+        if (!isNaN(endDate.getTime()) && endDate < now) {
+          isExpired = true;
+        }
+      }
+
+      // Only evaluate frozen / active when dates are OK
+      if (hasStarted && !isExpired) {
+        // ── c) isFrozen / frozenUntil check (Condition 6 in spec) ────────────
+        let packageIsFrozen = false;
+        if (pkg.isFrozen) {
+          if (!pkg.frozenUntil) {
+            packageIsFrozen = true; // Frozen indefinitely
+          } else {
+            const frozenUntil = new Date(
+              isoDateRe.test(String(pkg.frozenUntil).trim())
+                ? `${pkg.frozenUntil}T23:59:59.999`
+                : pkg.frozenUntil
+            );
+            if (!isNaN(frozenUntil.getTime()) && frozenUntil > now) {
+              packageIsFrozen = true;
+            }
+          }
+        }
+
+        if (packageIsFrozen) {
+          isCurrentlyFrozen = true;
+          // Do NOT break — keep checking other packages; one unfrozen is enough
+        } else {
+          // ── d) Active subscription (Condition 7 in spec) ─────────────────
+          hasValidSubscription = true;
+          break; // One valid package is sufficient — grant access immediately
+        }
+      }
+    }
+
+    // ── 4. Return result in strict priority order ─────────────────────────────
+    // Priority: startDate not reached → frozen → expired → active
+    if (!hasValidSubscription && isFutureSubscription && !isCurrentlyFrozen) {
+      console.log(`[wallet-verify] Subscription has not started yet for customer ${customerId}`);
+      return res.status(200).json({ allowed: false, reason: "Subscription has not started yet" });
+    }
+
+    if (isCurrentlyFrozen && !hasValidSubscription) {
+      console.log(`[wallet-verify] Subscription is frozen for customer ${customerId}`);
+      return res.status(200).json({ allowed: false, reason: "Subscription is Frozen" });
+    }
+
+    if (hasValidSubscription) {
+      console.log(`[wallet-verify] Active gym subscription granted for customer ${customerId}`);
+      return res.status(200).json({ allowed: true, reason: "Active Gym Subscription" });
+    }
+
+    console.log(`[wallet-verify] Subscription expired or invalid for customer ${customerId}`);
+    return res.status(200).json({ allowed: false, reason: "Subscription Expired" });
+
+  } catch (error: any) {
+    console.error("[wallet-verify] Error:", error);
+    return res.status(500).json({ allowed: false, reason: "Internal Server Error" });
+  }
+});
+
+/**
+ * Endpoint to remotely open the gate from an admin panel or app.
+ * Writes a command to Firestore that the local gateBridge will pick up.
+ */
+gateRouter.post("/open", async (req, res) => {
+  try {
+    const db = getDb();
+    const branch = req.body.branch || "Janabiya";
+    // Accept type from caller: dashboard sends 'MANUAL_OPEN', legacy callers send nothing (OPEN_GATE)
+    const type: string = req.body.type === "MANUAL_OPEN" ? "MANUAL_OPEN" : "OPEN_GATE";
+
+    await db.collection("gateCommands").add({
+      type,
+      doornum: 1,
+      branch,
+      status: "PENDING",
+      createdAt: FieldValue.serverTimestamp(),
+      requesterIp: req.ip || "unknown",
+    });
+
+    return res.status(200).json({ success: true, message: "Open command sent to branch bridge!" });
+  } catch (error: any) {
+    console.error("Remote Gate Open Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+/**
+ * GET /api/gate/poll-command
+ *
+ * Polled by the C# CloudDemo every ~2 seconds to check for pending manual
+ * open commands issued from the web dashboard.
+ *
+ * Secured by x-api-key / GATE_API_KEY environment variable.
+ *
+ * Response when a command is waiting:
+ *   { "command": "ManualOpenDoor", "branch": "Janabiya", "commandId": "..." }
+ *
+ * Response when nothing is pending:
+ *   { "command": null }
+ */
+gateRouter.use("/poll-command", (req, res, next) => {
+  const expectedKey = process.env.GATE_API_KEY;
+  if (!expectedKey) return next();
+
+  const apiKey =
+    req.headers["x-api-key"] ||
+    req.headers["authorization"]?.replace("Bearer ", "") ||
+    req.query.apiKey;
+
+  if (apiKey !== expectedKey) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+});
+
+gateRouter.get("/poll-command", async (req, res) => {
+  try {
+    console.log("[poll-command] Poll request received.");
+    const db = getDb();
+
+    // ── Simplified query: single where clause to avoid composite index issues ──
+    // All other filtering (type, branch) is done in-memory.
+    let snap: FirebaseFirestore.QuerySnapshot;
+    try {
+      snap = await db
+        .collection("gateCommands")
+        .where("status", "==", "PENDING")
+        .limit(20)
+        .get();
+    } catch (queryError: any) {
+      console.error("[poll-command] Firestore query failed:", queryError?.message || queryError);
+      return res.status(500).json({
+        error: "Firestore query failed",
+        detail: queryError?.message || String(queryError),
+      });
+    }
+
+    if (snap.empty) {
+      return res.status(200).json({ command: null });
+    }
+
+    // Filter in-memory: only MANUAL_OPEN commands for Janabiya
+    const matchingDocs = snap.docs.filter(d => {
+      const data = d.data();
+      return data.type === "MANUAL_OPEN" && data.branch === "Janabiya";
+    });
+
+    if (matchingDocs.length === 0) {
+      return res.status(200).json({ command: null });
+    }
+
+    // Sort in-memory by createdAt ascending to get the oldest command first
+    matchingDocs.sort((a, b) => {
+      const aTime = a.data().createdAt?.toMillis?.() ?? 0;
+      const bTime = b.data().createdAt?.toMillis?.() ?? 0;
+      return aTime - bTime;
+    });
+
+    const cmdDoc = matchingDocs[0];
+
+    // Mark as COMPLETED immediately so the next poll doesn't re-trigger it
+    try {
+      await cmdDoc.ref.update({
+        status: "COMPLETED",
+        executedAt: FieldValue.serverTimestamp(),
+        executedBy: "C#_CloudDemo_Poller",
+      });
+    } catch (updateError: any) {
+      console.error("[poll-command] Failed to mark command as COMPLETED:", updateError?.message || updateError);
+    }
+
+    console.log(`[poll-command] Dispatched ManualOpenDoor to C# (doc: ${cmdDoc.id})`);
+
+    return res.status(200).json({
+      command: "ManualOpenDoor",
+      branch: cmdDoc.data().branch,
+      commandId: cmdDoc.id,
+    });
+  } catch (error: any) {
+    console.error("[poll-command] Unexpected error:", error?.stack || error?.message || error);
+    return res.status(500).json({
+      error: "Internal Server Error",
+      detail: error?.message || String(error),
+    });
+  }
+});
+
+gateRouter.get("/debug-env", (req, res) => {
+  res.json({
+    firebaseConfig: process.env.FIREBASE_CONFIG,
+    gcloudProject: process.env.GCLOUD_PROJECT,
+    projectId: process.env.FIREBASE_PROJECT_ID
+  });
+});
+
+/**
+ * Endpoint for the scanner to hit when a QR code is read.
+ * Or an endpoint for our internal service to call when the SDK listener triggers.
+ */
+gateRouter.post("/scan", async (req, res) => {
+  try {
+    // The payload from the QR code (could be customer ID)
+    const { qrPayload, branch, controllerIp } = req.body;
+
+    if (!qrPayload) {
+      return res.status(400).json({ error: "Missing qrPayload" });
+    }
+
+    const db = getDb();
+    let customerData: any = null;
+    let customerId = "";
+
+    // 1. Try to find the customer by ID
+    // The scanner usually sends the exact string encoded in the QR.
+    // If it's "HAYAT-12345", we strip the prefix.
+    let lookupId = qrPayload;
+    if (lookupId.startsWith("HAYAT-")) {
+      lookupId = lookupId.replace("HAYAT-", "");
+    }
+
+    let docRef = db.collection("customers").doc(lookupId);
+    let docSnap = await docRef.get();
+
+    if (docSnap.exists) {
+      customerData = docSnap.data();
+      customerId = docSnap.id;
+    } else {
+      // Fallback strategies: search by gateCardNumber (primary for QR gate reader), then other fields
+      let found = false;
+      
+      // Priority 1: Try numeric gateCardNumber lookup (this is what QR readers on gates send)
+      if (!isNaN(Number(lookupId))) {
+        const numericId = Number(lookupId);
+        const gateCardSnap = await db.collection("customers").where("gateCardNumber", "==", numericId).limit(1).get();
+        if (!gateCardSnap.empty) {
+          customerData = gateCardSnap.docs[0].data();
+          customerId = gateCardSnap.docs[0].id;
+          found = true;
+          console.log(`[Gate Scan] Found customer by gateCardNumber: ${numericId} -> ${customerId}`);
+        }
+      }
+
+      // Priority 2: Try other string-based fields
+      if (!found) {
+        const searchFields = ["phone", "cardNumber", "walletId", "nfcId"];
+        for (const field of searchFields) {
+          const querySnap = await db.collection("customers").where(field, "==", lookupId).limit(1).get();
+          if (!querySnap.empty) {
+            customerData = querySnap.docs[0].data();
+            customerId = querySnap.docs[0].id;
+            found = true;
+            console.log(`[Gate Scan] Found customer by ${field}: ${lookupId} -> ${customerId}`);
+            break;
+          }
+        }
+      }
+
+      if (!found) {
+        // Log failed attempt
+        await logGateAccess(db, {
+          customerId: "UNKNOWN",
+          customerName: "Unknown",
+          status: "DENIED",
+          reason: "Customer not found",
+          branch: branch || "Unknown",
+          qrPayload
+        });
+        return res.status(404).json({ success: false, message: "Customer not found" });
+      }
+    }
+
+    // 2. Validate Access Logic
+    const decision = await evaluateGateAccess(db, customerId, customerData, branch || "Unknown", qrPayload);
+
+    if (!decision.allowed) {
+      await logGateAccess(db, {
+        customerId: decision.customerId,
+        customerName: decision.customerName,
+        status: decision.status,
+        reason: decision.reason,
+        branch: branch || "Unknown",
+        qrPayload,
+      });
+      return res.status(403).json({
+        success: false,
+        access: 0,
+        message: "Access Denied",
+        customerId: decision.customerId,
+        customerName: decision.customerName,
+        reason: decision.reason,
+      });
+    }
+
+    await db.collection("gateCommands").add({
+      type: "OPEN_GATE",
+      doornum: 1,
+      branch: branch || "Janabiya",
+      status: "PENDING",
+      createdAt: FieldValue.serverTimestamp(),
+      requesterIp: "API_SCAN"
+    });
+
+    await logGateAccess(db, {
+      customerId: decision.customerId,
+      customerName: decision.customerName,
+      status: decision.status,
+      reason: decision.reason,
+      branch: branch || "Unknown",
+      qrPayload,
+    });
+
+    return res.status(200).json({
+      success: true,
+      access: 1,
+      message: "Access Granted",
+      customerId: decision.customerId,
+      customerName: decision.customerName,
+      reason: decision.reason,
+    });
+
+  } catch (error: any) {
+    console.error("Gate Scan Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+/**
+ * Helper to log gate access events to Firestore
+ */
+async function logGateAccess(db: FirebaseFirestore.Firestore, data: {
+  customerId: string;
+  customerName: string;
+  status: "GRANTED" | "DENIED";
+  reason: string;
+  branch: string;
+  qrPayload?: string;
+}) {
+  try {
+    await db.collection("gateLogs").add({
+      ...data,
+      timestamp: FieldValue.serverTimestamp(),
+    });
+  } catch (e) {
+    console.error("Failed to write gate log:", e);
+  }
+}
+type GateAccessDecision = {
+  allowed: boolean;
+  status: "GRANTED" | "DENIED";
+  reason: string;
+  customerId: string;
+  customerName: string;
+  membershipType?: "staff" | "family" | "member" | "blocked";
+};
+
+function parseGateEndDate(value: unknown): Date | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const parsed = new Date(trimmed);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    parsed.setHours(23, 59, 59, 999);
+  }
+
+  return parsed;
+}
+
+export async function evaluateGateAccess(
+  db: any,
+  customerId: string,
+  customerData: any,
+  branch: string,
+  qrPayload?: string,
+): Promise<GateAccessDecision> {
+  const customerName = customerData?.name || "Unknown";
+
+  if (customerData?.isBlocked) {
+    return {
+      allowed: false,
+      status: "DENIED",
+      reason: `Blocked account. Reason: ${customerData.blockedReason || "None"}`,
+      customerId,
+      customerName,
+      membershipType: "blocked",
+    };
+  }
+
+  if (customerData?.role === "staff" || customerData?.role === "family") {
+    return {
+      allowed: true,
+      status: "GRANTED",
+      reason: `VIP Access`,
+      customerId,
+      customerName,
+      membershipType: customerData.role,
+    };
+  }
+
+  const packagesSnap = await db.collection("customerPackages")
+    .where("customerId", "==", customerId)
+    .where("category", "==", "gym")
+    .where("isActive", "==", true)
+    .get();
+
+  if (packagesSnap.empty) {
+    return {
+      allowed: false,
+      status: "DENIED",
+      reason: "No active gym membership",
+      customerId,
+      customerName,
+      membershipType: "member",
+    };
+  }
+
+  const now = new Date();
+  let hasValidAccess = false;
+  let isFrozen = false;
+
+  for (const doc of packagesSnap.docs) {
+    const pkg = doc.data();
+    if (pkg?.isFrozen && pkg?.frozenUntil) {
+      const frozenUntil = new Date(pkg.frozenUntil);
+      if (!Number.isNaN(frozenUntil.getTime()) && frozenUntil > now) {
+        isFrozen = true;
+        continue;
+      }
+    }
+
+    const endDate = parseGateEndDate(pkg?.endDate);
+    if (endDate && endDate < now) {
+      continue;
+    }
+
+    hasValidAccess = true;
+    break;
+  }
+
+  if (!hasValidAccess) {
+    const reason = isFrozen ? "Gym membership is currently frozen" : "Subscription is expired or no active gym membership";
+    return {
+      allowed: false,
+      status: "DENIED",
+      reason,
+      customerId,
+      customerName,
+      membershipType: "member",
+    };
+  }
+
+  return {
+    allowed: true,
+    status: "GRANTED",
+    reason: "Active Membership",
+    customerId,
+    customerName,
+    membershipType: "member",
+  };
+}
+
+export function buildGateResponsePayload(decision: GateAccessDecision, successMessage: string, deniedMessage: string) {
+  return {
+    success: decision.allowed,
+    access: decision.allowed ? 1 : 0,
+    message: decision.allowed ? successMessage : deniedMessage,
+    customerId: decision.customerId,
+    customerName: decision.customerName,
+    reason: decision.reason,
+  };
+}

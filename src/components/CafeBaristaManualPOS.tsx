@@ -174,7 +174,7 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" dir={dir}>
+    <div className="fixed inset-0 z-100 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" dir={dir}>
       <div className="bg-white w-full max-w-6xl h-[90vh] rounded-2xl shadow-2xl flex overflow-hidden flex-col md:flex-row">
         
         {/* Left: Menu & Categories */}
@@ -226,7 +226,7 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => setShowCustomModal(true)} 
-                className="bg-[#7d834e] text-white px-3 py-1.5 rounded-lg font-bold text-sm hover:bg-[#6c7143] transition-colors flex items-center gap-1 min-h-[44px]"
+                className="bg-[#7d834e] text-white px-3 py-1.5 rounded-lg font-bold text-sm hover:bg-[#6c7143] transition-colors flex items-center gap-1 min-h-11"
               >
                 <Edit3 className="w-5 h-5" />
                 <span className="hidden sm:inline">{language === 'ar' ? 'منتج مخصص' : 'Custom'}</span>
@@ -236,12 +236,12 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
                   loadSuspendedOrders();
                   setShowSuspendedPanel(true);
                 }} 
-                className="bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-bold text-sm hover:bg-orange-200 transition-colors flex items-center gap-1 min-h-[44px]"
+                className="bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-bold text-sm hover:bg-orange-200 transition-colors flex items-center gap-1 min-h-11"
               >
                 <List className="w-5 h-5" />
                 <span className="hidden sm:inline">{language === 'ar' ? 'الطلبات المعلقة' : 'Suspended'}</span>
               </button>
-              <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center">
+              <button onClick={onClose} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg min-h-11 min-w-11 flex items-center justify-center">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -259,7 +259,7 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
                   setActiveCategory(cat.id as Category);
                   setMojitoBase(null);
                 }}
-                className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all min-h-[64px] ${
+                className={`flex-1 flex flex-col items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all min-h-16 ${
                   activeCategory === cat.id 
                     ? 'bg-[#7d834e] text-white shadow-md scale-105' 
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -278,7 +278,7 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
                   <button 
                     key={item.id} 
                     onClick={() => addToCart(item.id, item.name[language], item.price)}
-                    className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-[#7d834e] hover:shadow-md transition-all text-left flex flex-col items-center justify-center text-center active:scale-95 min-h-[80px]"
+                    className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-[#7d834e] hover:shadow-md transition-all flex flex-col items-center justify-center text-center active:scale-95 min-h-20"
                   >
                     <h3 className="font-bold text-gray-800 mb-2">{item.name[language]}</h3>
                     <div className="font-black text-[#5a5e32]">{item.price.toFixed(3)} {currency}</div>
@@ -293,7 +293,7 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
                   <button 
                     key={item.id} 
                     onClick={() => addToCart(item.id, item.name[language], item.price)}
-                    className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-[#7d834e] hover:shadow-md transition-all text-left flex flex-col items-center justify-center text-center active:scale-95 min-h-[80px]"
+                    className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:border-[#7d834e] hover:shadow-md transition-all flex flex-col items-center justify-center text-center active:scale-95 min-h-20"
                   >
                     <h3 className="font-bold text-gray-800 mb-2">{item.name[language]}</h3>
                     <div className="font-black text-[#5a5e32]">{item.price.toFixed(3)} {currency}</div>
@@ -314,7 +314,7 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
                         <button 
                           key={base.id}
                           onClick={() => setMojitoBase({ id: base.id, name: base.name[language], price: base.price })}
-                          className="bg-white p-6 rounded-2xl border-2 border-gray-200 hover:border-[#7d834e] shadow-sm hover:shadow-md transition-all flex flex-col items-center text-center active:scale-95 min-h-[100px]"
+                          className="bg-white p-6 rounded-2xl border-2 border-gray-200 hover:border-[#7d834e] shadow-sm hover:shadow-md transition-all flex flex-col items-center text-center active:scale-95 min-h-25"
                         >
                           <CupSoda className="w-10 h-10 text-[#7d834e] mb-3" />
                           <span className="font-bold text-xl text-gray-800 mb-2">{base.name[language]}</span>
@@ -344,7 +344,7 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
                         <button 
                           key={flavor.id}
                           onClick={() => handleAddMojito(flavor)}
-                          className="bg-white p-4 rounded-xl border border-gray-200 hover:border-[#7d834e] hover:bg-[#7d834e]/5 shadow-sm hover:shadow-md transition-all flex flex-col items-center text-center active:scale-95 min-h-[64px] justify-center"
+                          className="bg-white p-4 rounded-xl border border-gray-200 hover:border-[#7d834e] hover:bg-[#7d834e]/5 shadow-sm hover:shadow-md transition-all flex flex-col items-center text-center active:scale-95 min-h-16 justify-center"
                         >
                           <span className="font-bold text-gray-800">{flavor.name[language]}</span>
                         </button>
@@ -358,7 +358,7 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
         </div>
 
         {/* Right: Cart & Payment */}
-        <div className="w-full md:w-[400px] bg-white flex flex-col">
+        <div className="w-full md:w-100 bg-white flex flex-col">
           <div className="p-4 border-b border-gray-200 bg-gray-50/50">
             <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
               <ShoppingBag className="w-6 h-6 text-[#7d834e]" />
@@ -380,9 +380,9 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
                     <p className="text-sm text-[#7d834e] font-black">{(item.price * item.quantity).toFixed(3)} {currency}</p>
                   </div>
                   <div className="flex items-center gap-3 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm ml-2">
-                    <button onClick={() => updateQty(item.id, -1)} className="text-gray-500 hover:text-red-500 active:scale-90 transition-transform bg-gray-50 p-2 rounded-lg min-h-[36px] min-w-[36px] flex items-center justify-center"><Minus className="w-5 h-5" /></button>
+                    <button onClick={() => updateQty(item.id, -1)} className="text-gray-500 hover:text-red-500 active:scale-90 transition-transform bg-gray-50 p-2 rounded-lg min-h-9 min-w-9 flex items-center justify-center"><Minus className="w-5 h-5" /></button>
                     <span className="font-bold text-lg w-6 text-center select-none">{item.quantity}</span>
-                    <button onClick={() => updateQty(item.id, 1)} className="text-gray-500 hover:text-green-500 active:scale-90 transition-transform bg-gray-50 p-2 rounded-lg min-h-[36px] min-w-[36px] flex items-center justify-center"><Plus className="w-5 h-5" /></button>
+                    <button onClick={() => updateQty(item.id, 1)} className="text-gray-500 hover:text-green-500 active:scale-90 transition-transform bg-gray-50 p-2 rounded-lg min-h-9 min-w-9 flex items-center justify-center"><Plus className="w-5 h-5" /></button>
                   </div>
                 </div>
               ))
@@ -464,14 +464,14 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
               <button 
                 onClick={handleParkSale}
                 disabled={cart.length === 0}
-                className="flex-[1] bg-orange-100 text-orange-700 font-bold py-4 rounded-xl hover:bg-orange-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all active:scale-[0.98] flex justify-center items-center gap-2 border border-orange-200"
+                className="flex-1 bg-orange-100 text-orange-700 font-bold py-4 rounded-xl hover:bg-orange-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all active:scale-[0.98] flex justify-center items-center gap-2 border border-orange-200"
               >
                 <PauseCircle className="w-5 h-5" />
               </button>
               <button 
                 onClick={handleCheckout}
                 disabled={cart.length === 0 || !selectedPayment}
-                className="flex-[4] bg-[#5a5e32] text-white font-bold py-4 rounded-xl hover:bg-[#4a4e28] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all active:scale-[0.98] flex justify-center items-center gap-2"
+                className="flex-4 bg-[#5a5e32] text-white font-bold py-4 rounded-xl hover:bg-[#4a4e28] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all active:scale-[0.98] flex justify-center items-center gap-2"
               >
                 <ShoppingBag className="w-5 h-5" />
                 {selectedPayment === 'Split' 
@@ -487,11 +487,11 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
 
       {/* Custom Item Modal Overlay (Pop-up inside POS) */}
       {showCustomModal && (
-        <div className="absolute inset-0 z-[110] flex items-center justify-center bg-gray-900/40 backdrop-blur-sm">
+        <div className="absolute inset-0 z-110 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm">
           <form onSubmit={handleAddCustomItem} className="bg-white p-6 rounded-2xl shadow-2xl w-[90%] max-w-sm animate-fade-in">
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-xl font-bold text-gray-800">{language === 'ar' ? 'إضافة منتج مخصص' : 'Add Custom Item'}</h3>
-              <button type="button" onClick={() => setShowCustomModal(false)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center">
+              <button type="button" onClick={() => setShowCustomModal(false)} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg min-h-11 min-w-11 flex items-center justify-center">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -504,7 +504,7 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
                   required
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
-                  className="w-full p-4 text-lg bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#7d834e] outline-none min-h-[52px]"
+                  className="w-full p-4 text-lg bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#7d834e] outline-none min-h-13"
                   placeholder={language === 'ar' ? 'مثال: كيكة شوكولاتة' : 'e.g., Chocolate Cake'}
                   autoFocus
                 />
@@ -517,7 +517,7 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
                   required
                   value={customPrice}
                   onChange={(e) => setCustomPrice(e.target.value)}
-                  className="w-full p-4 text-lg bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#7d834e] outline-none min-h-[52px] text-left"
+                  className="w-full p-4 text-lg bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#7d834e] outline-none min-h-13 text-left"
                   dir="ltr"
                   placeholder="0.000"
                 />
@@ -526,7 +526,7 @@ export default function CafeBaristaManualPOS({ onClose, language, onCheckout, st
             
             <button 
               type="submit"
-              className="w-full mt-6 bg-[#7d834e] text-white font-bold text-lg py-4 rounded-xl hover:bg-[#6c7143] shadow-md active:scale-95 transition-all min-h-[52px]"
+              className="w-full mt-6 bg-[#7d834e] text-white font-bold text-lg py-4 rounded-xl hover:bg-[#6c7143] shadow-md active:scale-95 transition-all min-h-13"
             >
               {language === 'ar' ? 'إضافة للطلب' : 'Add to Order'}
             </button>

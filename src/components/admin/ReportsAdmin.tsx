@@ -7,9 +7,9 @@ import { db, isFirebaseConfigured } from '../../firebase';
 import { Invoice, PaymentMethod } from '../../types';
 import { isCafeInvoice } from '../../utils/invoiceClassifiers';
 
-export default function ReportsAdmin() {
+export default function ReportsAdmin({ onNavigateToCustomer }: { onNavigateToCustomer?: (customer: any) => void }) {
   const { language, t } = useLanguage();
-  const { invoicesList, staffList, availableBranches, triggerToast, loadAllData, setAdminConfirmModal, setInvoicesList, getCustomerName, companyName } = useAdminContext();
+  const { invoicesList, staffList, availableBranches, triggerToast, loadAllData, setAdminConfirmModal, setInvoicesList, getCustomerName, companyName, customersList } = useAdminContext();
 
   const getInvoiceCustomerName = (inv: Invoice) => {
     if (inv.customerName) return inv.customerName;
@@ -340,6 +340,41 @@ export default function ReportsAdmin() {
             const cafeStaffPerformanceList = Object.values(cafeStaffPerformanceMap)
               .map((data: any) => ({ ...data, revenue: Math.round(data.revenue * 1000) / 1000 }))
               .sort((a: any, b: any) => b.revenue - a.revenue);
+
+            const cafeProductPerformanceMap: Record<string, any> = {};
+
+            cafeTransactions.forEach(inv => {
+              const text = inv.description || '';
+              const cleanText = text.replace(/\(مع:[^)]+\)/g, '')
+                                    .replace(/\([^)]*Discount[^)]*\)/g, '')
+                                    .replace(/\([^)]*موظفين[^)]*\)/g, '')
+                                    .trim();
+
+              const parts = cleanText.split(' + ');
+              const numParts = parts.length;
+              const revPerPart = numParts > 0 ? (Number(inv.amount) || 0) / numParts : 0; 
+
+              parts.forEach(part => {
+                const match = part.trim().match(/^(\d+)x\s+(.+)$/);
+                let qty = 1;
+                let name = part.trim();
+                
+                if (match) {
+                   qty = parseInt(match[1]);
+                   name = match[2];
+                }
+                
+                if (!cafeProductPerformanceMap[name]) {
+                  cafeProductPerformanceMap[name] = { name, count: 0, revenue: 0 };
+                }
+                cafeProductPerformanceMap[name].count += qty;
+                cafeProductPerformanceMap[name].revenue += revPerPart; 
+              });
+            });
+
+            const cafeProductPerformanceList = Object.values(cafeProductPerformanceMap)
+              .map((data: any) => ({ ...data, revenue: Math.round(data.revenue * 1000) / 1000 }))
+              .sort((a: any, b: any) => b.count - a.count);
 
             // Staff performance map
             const staffPerformanceMap: Record<string, any> = {};
@@ -799,7 +834,7 @@ export default function ReportsAdmin() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 shadow-sm">
                     <div className="flex items-center gap-2 border-b border-orange-100 pb-3 mb-4">
                       <Building2 className="w-5 h-5 text-orange-600" />
@@ -842,6 +877,29 @@ export default function ReportsAdmin() {
                       ))}
                       {cafeStaffPerformanceList.filter((item: any) => item.count > 0).length === 0 && (
                         <div className="text-center py-6 text-xs text-gray-400">{language === 'ar' ? 'لا توجد مبيعات كافيه مسجلة للموظفين' : 'No cafe sales recorded for staff.'}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 shadow-sm">
+                    <div className="flex items-center gap-2 border-b border-orange-100 pb-3 mb-4">
+                      <TrendingUp className="w-5 h-5 text-orange-600" />
+                      <h3 className="font-serif text-base font-bold text-orange-800 text-start">
+                        {language === 'ar' ? 'مبيعات الكافيه حسب المنتج' : 'Cafe Sales by Product'}
+                      </h3>
+                    </div>
+                    <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                      {cafeProductPerformanceList.filter((item: any) => item.count > 0).map((item: any) => (
+                        <div key={item.name} className="flex items-center justify-between rounded-lg border border-orange-100 bg-white px-3 py-2">
+                          <span className="font-semibold text-sm text-gray-700 truncate mr-2">{item.name}</span>
+                          <div className="text-right shrink-0">
+                            <div className="text-sm font-bold text-orange-700 font-mono">{item.revenue.toFixed(3)} BHD</div>
+                            <div className="text-[10px] text-gray-500">{item.count} {language === 'ar' ? 'وحدة' : 'units'}</div>
+                          </div>
+                        </div>
+                      ))}
+                      {cafeProductPerformanceList.filter((item: any) => item.count > 0).length === 0 && (
+                        <div className="text-center py-6 text-xs text-gray-400">{language === 'ar' ? 'لا توجد مبيعات كافيه مسجلة للمنتجات' : 'No cafe product sales recorded.'}</div>
                       )}
                     </div>
                   </div>
@@ -938,7 +996,23 @@ export default function ReportsAdmin() {
                                 />
                               </td>
                               <td className="p-3 font-mono text-gray-400 text-right">{inv.id?.substring(0, 8) || 'local-' + index}</td>
-                              <td className="p-3 font-bold text-gray-900 text-right">{getInvoiceCustomerName(inv)}</td>
+                              <td className="p-3 font-bold text-gray-900 text-right">
+                                {inv.primaryCustomerId ? (
+                                  <button
+                                    onClick={() => {
+                                      if (onNavigateToCustomer) {
+                                        const cust = customersList.find(c => c.id === inv.primaryCustomerId);
+                                        if (cust) onNavigateToCustomer(cust);
+                                      }
+                                    }}
+                                    className="hover:text-brand-olive hover:underline cursor-pointer transition-colors text-right"
+                                  >
+                                    {getInvoiceCustomerName(inv)}
+                                  </button>
+                                ) : (
+                                  getInvoiceCustomerName(inv)
+                                )}
+                              </td>
                               <td className="p-3 font-serif font-semibold text-olive-dark text-right">{inv.branch}</td>
                               <td className="p-3 text-right">
                                 <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase ${

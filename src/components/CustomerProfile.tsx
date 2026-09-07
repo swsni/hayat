@@ -781,14 +781,35 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
     }
   };
 
+  const generateGateCardNumber = (customerId: string): number => {
+    let hash = 0;
+    const str = "HAYAT-GATE-" + customerId;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash + char) | 0;
+    }
+    const positiveHash = Math.abs(hash);
+    return positiveHash < 1000000000 ? positiveHash + 1000000000 : positiveHash;
+  };
+
   const handlePrintCard = async () => {
     setIsPrinting(true);
     showToast('Preparing physical card template...', 'ref');
     try {
-      // 1. Generate QR Code - use numeric gateCardNumber for gate compatibility
-      const qrPayload = (customer as any).gateCardNumber 
-        ? (customer as any).gateCardNumber.toString() 
-        : `HAYAT-${customer.id}`;
+      let cardNum = (customer as any).gateCardNumber;
+      if (!cardNum) {
+        cardNum = generateGateCardNumber(customer.id);
+        if (isFirebaseConfigured && db && navigator.onLine) {
+          try {
+            await updateDoc(doc(db, 'customers', customer.id), { gateCardNumber: cardNum });
+          } catch (e) {
+            console.error("Failed to update gateCardNumber for print", e);
+          }
+        }
+      }
+      
+      // ✔️ التعديل السحري: توحيد الـ QR ليكون أرقام فقط مثل محفظة آبل تماماً لتسهيل قراءته على البوابة
+      const qrPayload = cardNum > 0 ? cardNum.toString() : `HAYAT-${customer.id}`;
       const qrDataUrl = await QRCode.toDataURL(qrPayload, { width: 300, margin: 1 });
       
       // Bypass fetch(qrDataUrl) which can be blocked by browsers or service workers for data: URLs.
@@ -1107,7 +1128,7 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
     }
   };
 
-  const hasActiveGym = packages.some(p => p.category === 'gym' && p.isActive);
+
   const [isCoffeeModalOpen, setIsCoffeeModalOpen] = useState(false);
   const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState<number | ''>('');
@@ -1182,6 +1203,8 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
         } as AuditLog);
 
         await batch.commit();
+        // Trigger Apple Wallet push so the card reflects the blocked status
+        triggerWalletUpdate(customer.id).catch(() => {});
         showToast(language === 'ar' ? 'تم حظر العميل من جميع الفروع' : 'Customer blocked from all branches', 'success');
         setIsBlockModalOpen(false);
         setBlockReason('');
@@ -1228,6 +1251,8 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
         } as AuditLog);
 
         await batch.commit();
+        // Trigger Apple Wallet push so the card reflects the unblocked status
+        triggerWalletUpdate(customer.id).catch(() => {});
         showToast(language === 'ar' ? 'تم إلغاء حظر العميل بنجاح' : 'Customer unblocked successfully', 'success');
         setIsBlockModalOpen(false);
         
@@ -1246,7 +1271,7 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
     }
   };
 
-  const handleUpdateGymAccess = async (access: 'member' | 'staff' | 'family') => {
+  const handleUpdateRole = async (access: 'member' | 'staff' | 'family') => {
     if (!isFirebaseConfigured || !db || !navigator.onLine) {
       showToast(language === 'ar' ? 'لا يمكن تحديث الصلاحيات بدون إنترنت' : 'Cannot update access while offline', 'error');
       return;
@@ -1256,7 +1281,7 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
       const batch = writeBatch(db);
       
       batch.update(customerRef, {
-        gymAccess: access
+        role: access
       });
 
       const accessNames = {
@@ -1277,9 +1302,11 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
       } as AuditLog);
 
       await batch.commit();
+      // Trigger Apple Wallet push so the card reflects the new access level
+      triggerWalletUpdate(customer.id).catch(() => {});
       
       if (onCustomerUpdated) {
-        onCustomerUpdated({ ...customer, gymAccess: access });
+        onCustomerUpdated({ ...customer, role: access });
       }
       showToast(language === 'ar' ? 'تم تحديث صلاحية الدخول' : 'Access level updated', 'success');
       fetchProfileData();
@@ -1289,14 +1316,32 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
     }
   };
 
-  const activeGymPackage = packages.find(p => {
-    if (p.category !== 'gym' || !p.isActive) return false;
-    if (!p.endDate) return true;
-    const end = new Date(p.endDate);
-    end.setHours(23, 59, 59, 999);
-    return end >= new Date();
-  });
-  const isGymFrozen = activeGymPackage?.isFrozen && activeGymPackage?.frozenUntil && new Date(activeGymPackage.frozenUntil) > new Date();
+  const latestGymPackage = [...packages]
+    .filter(p => p.category === 'gym')
+    .sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime())[0];
+
+  const gymStatus = (() => {
+    if (!latestGymPackage) return 'none';
+    if (latestGymPackage.startDate) {
+      const start = new Date(latestGymPackage.startDate);
+      start.setHours(0, 0, 0, 0);
+      if (start > new Date()) return 'future';
+    }
+    if (latestGymPackage.isFrozen && latestGymPackage.frozenUntil && new Date(latestGymPackage.frozenUntil) > new Date()) {
+      return 'frozen';
+    }
+    if (latestGymPackage.endDate) {
+      const end = new Date(latestGymPackage.endDate);
+      end.setHours(23, 59, 59, 999);
+      if (end < new Date()) return 'expired';
+    }
+    return 'active';
+  })();
+
+  const isGymFrozen = gymStatus === 'frozen';
+  const hasActiveGym = gymStatus === 'active' || gymStatus === 'frozen' || gymStatus === 'future';
+  const activeGymPackage = hasActiveGym ? latestGymPackage : undefined;
+  
   const salonPackages = packages.filter(p => p.category === 'salon' && p.remainingSessions > 0);
   const activeSalonPackagesCount = salonPackages.length;
 
@@ -1566,12 +1611,22 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
               </div>
             <div>
               <h4 className="font-serif font-bold text-olive-dark text-base leading-tight">{language === 'ar' ? 'حالة عضوية الجيم' : 'Gym Pass Status'}</h4>
-              {hasActiveGym ? (
+              {latestGymPackage ? (
                 <div className="space-y-2 mt-1.5 text-start">
-                  {isGymFrozen ? (
+                  {gymStatus === 'frozen' ? (
                     <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded w-fit font-sans">
                       <Snowflake className="w-3.5 h-3.5" />
                       {language === 'ar' ? 'عضوية مجمدة' : 'Frozen Membership'}
+                    </div>
+                  ) : gymStatus === 'expired' ? (
+                    <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded w-fit font-sans">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      {language === 'ar' ? 'غير فعال / منتهي' : 'Inactive / Expired'}
+                    </div>
+                  ) : gymStatus === 'future' ? (
+                    <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded w-fit font-sans">
+                      <CalendarClock className="w-3.5 h-3.5" />
+                      {language === 'ar' ? `الاشتراك يبدأ في ${latestGymPackage.startDate}` : `Starts on ${latestGymPackage.startDate}`}
                     </div>
                   ) : (
                     <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded w-fit font-sans">
@@ -1579,24 +1634,30 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
                       {language === 'ar' ? 'عضوية نشطة وصالحة' : 'Active Membership'}
                     </div>
                   )}
-                  {activeGymPackage && (
+                  {latestGymPackage && (
                     <div className="flex justify-between items-start gap-2">
-                      {activeGymPackage.startDate && activeGymPackage.endDate ? (
+                      {latestGymPackage.startDate && latestGymPackage.endDate ? (
                         <div className="flex-1 text-[11px] text-gray-600 bg-olive-soft/40 border border-olive-light/50 rounded-lg p-2 space-y-1 font-sans mt-2">
                           <div className="flex justify-between gap-4">
                             <span className="text-gray-400">{language === 'ar' ? 'تاريخ البدء:' : 'Start:'}</span>
-                            <span className="font-mono font-bold text-olive-dark">{activeGymPackage.startDate}</span>
+                            <span className="font-mono font-bold text-olive-dark">{latestGymPackage.startDate}</span>
                           </div>
                           <div className="flex justify-between gap-4">
                             <span className="text-gray-400">{language === 'ar' ? 'ينتهي في:' : 'Expires:'}</span>
-                            <span className="font-mono font-bold text-rose-600">{activeGymPackage.endDate}</span>
+                            <span className={`font-mono font-bold ${gymStatus === 'expired' ? 'text-rose-600' : 'text-olive-dark'}`}>{latestGymPackage.endDate}</span>
                           </div>
+                          {gymStatus === 'frozen' && latestGymPackage.frozenUntil && (
+                            <div className="flex justify-between gap-4 pt-1 mt-1 border-t border-olive-light/30">
+                              <span className="text-sky-500 font-bold">{language === 'ar' ? 'مجمد حتى:' : 'Frozen Until:'}</span>
+                              <span className="font-mono font-bold text-sky-600">{new Date(latestGymPackage.frozenUntil).toLocaleDateString()}</span>
+                            </div>
+                          )}
                         </div>
                       ) : <div className="flex-1" />}
                       <div className="flex flex-col gap-1 items-center justify-center shrink-0">
-                        {isGhostPackage(activeGymPackage) && (
+                        {isGhostPackage(latestGymPackage) && (
                           <button 
-                            onClick={() => setResolvingGhostPackage(activeGymPackage)}
+                            onClick={() => setResolvingGhostPackage(latestGymPackage)}
                             className="p-1.5 text-rose-500 hover:text-rose-600 bg-rose-50 rounded-lg transition-colors cursor-pointer border border-rose-100 mt-2"
                             title={language === 'ar' ? 'باقة مجهولة بدون هيستوري - انقر للمراجعة' : 'Ghost package (no history) - click to resolve'}
                           >
@@ -1604,19 +1665,37 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
                           </button>
                         )}
                         <button 
-                          onClick={() => openEditPackageModal(activeGymPackage)}
+                          onClick={() => openEditPackageModal(latestGymPackage)}
                           className="p-1.5 mt-2 text-gray-400 hover:text-brand-olive hover:bg-olive-soft rounded-lg transition-colors cursor-pointer border border-transparent hover:border-olive-light"
                           title={language === 'ar' ? 'تعديل الباقة' : 'Edit Package'}
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
+                        {gymStatus === 'active' && !latestGymPackage.isFrozen && (
+                           <button 
+                             onClick={() => openFreezeModal(latestGymPackage)}
+                             className="p-1.5 mt-1 text-sky-500 hover:text-sky-600 bg-sky-50 rounded-lg transition-colors cursor-pointer border border-sky-100"
+                             title={language === 'ar' ? 'تجميد الاشتراك' : 'Freeze Subscription'}
+                           >
+                             <Snowflake className="w-4 h-4" />
+                           </button>
+                        )}
+                        {gymStatus === 'frozen' && (
+                           <button 
+                             onClick={() => handleUnfreezePackage(latestGymPackage)}
+                             className="p-1.5 mt-1 text-emerald-500 hover:text-emerald-600 bg-emerald-50 rounded-lg transition-colors cursor-pointer border border-emerald-100"
+                             title={language === 'ar' ? 'فك التجميد يدويًا' : 'Manual Unfreeze'}
+                           >
+                             <CheckCircle2 className="w-4 h-4" />
+                           </button>
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
               ) : (
                 <p className="mt-2 text-xs text-gray-400 leading-relaxed font-sans">
-                  {language === 'ar' ? 'لا يوجد اشتراك جيم نشط حالياً لهذا العميل. اضغط "شراء عضوية جيم" للتفعيل.' : "No active gym membership found. Click 'Add Gym' to provision access."}
+                  {language === 'ar' ? 'لا يوجد اشتراك جيم لهذا العميل. اضغط "شراء عضوية جيم" للتفعيل.' : "No gym membership found. Click 'Add Gym' to provision access."}
                 </p>
               )}
 
@@ -1625,30 +1704,30 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
                 <div className="flex items-center gap-2 mb-3">
                   <KeyRound className="w-4 h-4 text-brand-olive" />
                   <span className="text-xs font-bold text-olive-dark uppercase tracking-wider">
-                    {language === 'ar' ? 'صلاحية دخول البوابة' : 'Gate Access Level'}
+                    {language === 'ar' ? 'صلاحية دخول البوابة' : 'Customer Role'}
                   </span>
                 </div>
                 <div className="flex bg-gray-50 p-1 rounded-lg">
                   <button
-                    onClick={() => handleUpdateGymAccess('member')}
-                    className={`flex-1 py-1.5 px-2 rounded-md text-[10px] font-bold uppercase transition-colors ${(!customer.gymAccess || customer.gymAccess === 'member') ? 'bg-white text-olive-dark shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:bg-gray-100 cursor-pointer'}`}
+                    onClick={() => handleUpdateRole('member')}
+                    className={`flex-1 py-1.5 px-2 rounded-md text-[10px] font-bold uppercase transition-colors ${(!customer.role || customer.role === 'member') ? 'bg-white text-olive-dark shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:bg-gray-100 cursor-pointer'}`}
                   >
                     {language === 'ar' ? 'عضو' : 'Member'}
                   </button>
                   <button
-                    onClick={() => handleUpdateGymAccess('staff')}
-                    className={`flex-1 py-1.5 px-2 rounded-md text-[10px] font-bold uppercase transition-colors ${customer.gymAccess === 'staff' ? 'bg-brand-olive text-white shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:bg-gray-100 cursor-pointer'}`}
+                    onClick={() => handleUpdateRole('staff')}
+                    className={`flex-1 py-1.5 px-2 rounded-md text-[10px] font-bold uppercase transition-colors ${customer.role === 'staff' ? 'bg-brand-olive text-white shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:bg-gray-100 cursor-pointer'}`}
                   >
                     {language === 'ar' ? 'موظف' : 'Staff'}
                   </button>
                   <button
-                    onClick={() => handleUpdateGymAccess('family')}
-                    className={`flex-1 py-1.5 px-2 rounded-md text-[10px] font-bold uppercase transition-colors ${customer.gymAccess === 'family' ? 'bg-brand-olive text-white shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:bg-gray-100 cursor-pointer'}`}
+                    onClick={() => handleUpdateRole('family')}
+                    className={`flex-1 py-1.5 px-2 rounded-md text-[10px] font-bold uppercase transition-colors ${customer.role === 'family' ? 'bg-brand-olive text-white shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:bg-gray-100 cursor-pointer'}`}
                   >
                     {language === 'ar' ? 'عائلة' : 'Family'}
                   </button>
                 </div>
-                {customer.gymAccess && customer.gymAccess !== 'member' && (
+                {customer.role && customer.role !== 'member' && (
                   <p className="text-[10px] text-brand-olive mt-2 font-medium bg-olive-soft/50 p-2 rounded flex items-start gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                     {language === 'ar' 
@@ -1688,7 +1767,60 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
                     <div className="flex justify-between items-start gap-2">
                       <div>
                         <span className="font-serif text-sm font-bold text-olive-dark block leading-tight">
-                          {pkg.packageName}
+                          {(() => {
+                            let name = pkg.packageName;
+                            if (!name) return name;
+                            
+                            // Arabic to English translations (when viewing in English)
+                            if (language !== 'ar') {
+                              // Gaps Package
+                              name = name.replace('بكج الفراغات - جلسة سكراب للشعر', 'Gaps Package - Hair Scrub');
+                              name = name.replace('بكج الفراغات - جلسات حنة او مشاط', 'Gaps Package - Henna or Mashat');
+                              name = name.replace('بكج الفراغات - جلسات سدر', 'Gaps Package - Sidr');
+                              name = name.replace('بكج الفراغات - جلسة مساج زيت او الزبدات', 'Gaps Package - Oil or Butter Massage');
+                              name = name.replace('بكج الفراغات - جلسة ماسك الترطيب', 'Gaps Package - Moisturizing Mask');
+                              name = name.replace('بكج الفراغات', 'Gaps Package'); // Fallback
+
+                              // Moisturizing Package
+                              name = name.replace('بكج الترطيب - جلسات حنة او مشاط', 'Moisturizing Package - Henna or Mashat');
+                              name = name.replace('بكج الترطيب - جلسة مساج زيت او الزبدات', 'Moisturizing Package - Oil or Butter Massage');
+                              name = name.replace('بكج الترطيب - جلسة ماسك الترطيب', 'Moisturizing Package - Moisturizing Mask');
+                              name = name.replace('بكج الترطيب', 'Moisturizing Package'); // Fallback
+
+                              // Hayat Package
+                              name = name.replace('باقة حياة - جلسة مشاط اخضر مع غسيل', 'Hayat Package - Green Mashat with wash');
+                              name = name.replace('باقة حياة - جلسة سدر مع غسيل', 'Hayat Package - Sidr with wash');
+                              name = name.replace('باقة حياة - جلسه زيوت مع غسيل', 'Hayat Package - Oils with wash');
+                              name = name.replace('باقة حياة - جلسة حنة مع غسيل', 'Hayat Package - Henna with wash');
+                              name = name.replace('باقة حياة - جلسة ماسك الترطيب', 'Hayat Package - Moisturizing Mask');
+                              name = name.replace('باقة حياة', 'Hayat Package'); // Fallback
+                            }
+                            // English to Arabic translations (when viewing in Arabic)
+                            else {
+                              // Gaps Package
+                              name = name.replace('Gaps Package - Hair Scrub', 'بكج الفراغات - جلسة سكراب للشعر');
+                              name = name.replace('Gaps Package - Henna or Mashat', 'بكج الفراغات - جلسات حنة او مشاط');
+                              name = name.replace('Gaps Package - Sidr', 'بكج الفراغات - جلسات سدر');
+                              name = name.replace('Gaps Package - Oil or Butter Massage', 'بكج الفراغات - جلسة مساج زيت او الزبدات');
+                              name = name.replace('Gaps Package - Moisturizing Mask', 'بكج الفراغات - جلسة ماسك الترطيب');
+                              name = name.replace('Gaps Package', 'بكج الفراغات'); // Fallback
+
+                              // Moisturizing Package
+                              name = name.replace('Moisturizing Package - Henna or Mashat', 'بكج الترطيب - جلسات حنة او مشاط');
+                              name = name.replace('Moisturizing Package - Oil or Butter Massage', 'بكج الترطيب - جلسة مساج زيت او الزبدات');
+                              name = name.replace('Moisturizing Package - Moisturizing Mask', 'بكج الترطيب - جلسة ماسك الترطيب');
+                              name = name.replace('Moisturizing Package', 'بكج الترطيب'); // Fallback
+
+                              // Hayat Package
+                              name = name.replace('Hayat Package - Green Mashat with wash', 'باقة حياة - جلسة مشاط اخضر مع غسيل');
+                              name = name.replace('Hayat Package - Sidr with wash', 'باقة حياة - جلسة سدر مع غسيل');
+                              name = name.replace('Hayat Package - Oils with wash', 'باقة حياة - جلسه زيوت مع غسيل');
+                              name = name.replace('Hayat Package - Henna with wash', 'باقة حياة - جلسة حنة مع غسيل');
+                              name = name.replace('Hayat Package - Moisturizing Mask', 'باقة حياة - جلسة ماسك الترطيب');
+                              name = name.replace('Hayat Package', 'باقة حياة'); // Fallback
+                            }
+                            return name;
+                          })()}
                         </span>
                         {pkg.endDate && (
                           <span className="text-[10px] text-gray-400 block mt-1 font-sans">
@@ -1795,7 +1927,7 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
                 {auditLogs.map((log, idx) => {
                   let badgeColors = 'bg-gray-100 text-gray-600';
                   let Icon = Minus;
-                  let displayAction = log.action;
+                  let displayAction: string = log.action;
                   const logDate = new Date(log.timestamp);
                   const hasValidLogDate = !Number.isNaN(logDate.getTime());
                   const logDateText = hasValidLogDate
@@ -1992,15 +2124,31 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
                         <span className="text-[8px] uppercase tracking-wider text-stone-300 font-semibold mb-1 block">
                         {language === 'ar' ? 'اشتراك الجيم' : 'Gym Membership'}
                       </span>
-                      {hasActiveGym ? (
+                      {gymStatus === 'active' || gymStatus === 'frozen' ? (
                         <div className="flex flex-col gap-0.5 mt-0.5">
-                          <span className="text-[11px] font-bold text-green-300 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
-                            {language === 'ar' ? 'نشط وصالح' : 'Active Pass'}
+                          <span className={`text-[11px] font-bold flex items-center gap-1 ${gymStatus === 'frozen' ? 'text-sky-300' : 'text-green-300'}`}>
+                            {gymStatus === 'frozen' ? (
+                              <Snowflake className="w-2.5 h-2.5 shrink-0" />
+                            ) : (
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
+                            )}
+                            {gymStatus === 'frozen' ? (language === 'ar' ? 'مجمد' : 'Frozen') : (language === 'ar' ? 'نشط وصالح' : 'Active Pass')}
                           </span>
                           {activeGymPackage?.endDate && (
                             <span className="text-[9px] font-mono text-stone-200 mt-0.5">
                               {language === 'ar' ? 'ينتهي:' : 'Exp:'} {activeGymPackage.endDate}
+                            </span>
+                          )}
+                        </div>
+                      ) : gymStatus === 'future' ? (
+                        <div className="flex flex-col gap-0.5 mt-0.5">
+                          <span className="text-[11px] font-bold text-orange-300 flex items-center gap-1">
+                            <CalendarClock className="w-2.5 h-2.5 shrink-0" />
+                            {language === 'ar' ? 'قيد الانتظار' : 'Pending'}
+                          </span>
+                          {activeGymPackage?.startDate && (
+                            <span className="text-[9px] font-mono text-stone-200 mt-0.5">
+                              {language === 'ar' ? 'يبدأ:' : 'Starts:'} {activeGymPackage.startDate}
                             </span>
                           )}
                         </div>
@@ -2464,7 +2612,7 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
       {/* Edit Package Modal */}
       {/* Freeze Package Modal */}
       {isFreezeModalOpen && freezingPackage && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60] font-sans">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-60 font-sans">
           <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-scale-in">
             <div className="bg-sky-600 p-4 relative">
               <div className="flex justify-between items-start">
@@ -2702,12 +2850,6 @@ const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
           customer={customer} 
           onClose={() => setIsInvoicesModalOpen(false)} 
         />
-      )}
-
-      {isEditPackageModalOpen && editingPackage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-olive-dark/45 backdrop-blur-sm">
-          {/* ... existing modal omitted for brevity as it's huge, I'll just insert before the final closing div ... */}
-        </div>
       )}
 
       {isCoffeeModalOpen && (

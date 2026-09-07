@@ -7,11 +7,14 @@ import { ensureAdminInitialized, getDb } from "./server/firebaseAdmin";
 import { 
   getWebNotificationRetentionDays,
   dispatchWalletPushForFamily,
-  enqueueWebNotificationForFamily
+  enqueueWebNotificationForFamily,
+  triggerPushNotification
 } from "./server/notificationsService";
 import { isSafeCustomerId } from "./utils/helpers";
 import { apiRouter } from "./server/routes";
 import { initGateWebSocketServer } from "./server/gateWebSocket";
+
+// Firebase Admin is initialized lazily via ensureAdminInitialized() inside route handlers.
 
 const app = express();
 
@@ -87,16 +90,18 @@ async function startServer() {
   }
 }
 
-const isCloudFunction = process.env.FUNCTION_SIGNATURE_TYPE || process.env.FUNCTION_TARGET || process.env.FIREBASE_CONFIG;
-if (!isCloudFunction) {
+const isRunDirectly = process.argv.includes('--run-direct');
+
+if (isRunDirectly) {
   startServer();
 }
 
 // Export the Express app as a v1 HTTPS Firebase Cloud Function
 export const apiV1 = functions.https.onRequest(app);
 
-// Initialize Firebase Admin App eagerly when possible.
-ensureAdminInitialized();
+// NOTE: Firebase Admin is initialized lazily on first request via ensureAdminInitialized()
+// inside each route handler. Do NOT call it here at module level — it causes
+// "Timeout after 10000" errors during `firebase deploy` analysis.
 
 // Scheduled Cron to automatically cleanup the Recycle Bin every midnight
 export const cleanupRecycleBinV1 = functions.pubsub
@@ -298,3 +303,142 @@ export const onCafeOrderStatusChangeNotifyV1 = functions.firestore
       });
     }
   });
+
+// ==========================================
+// V2 Cloud Functions (Added as per request)
+// ==========================================
+import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { getMessaging } from "firebase-admin/messaging";
+
+export const onAuditLogCreatedV2 = onDocumentCreated("auditLogs/{docId}", async (event) => {
+  const data = event.data?.data();
+  if (!data) return;
+
+  const customerId = data.customerId;
+  if (!customerId) return;
+
+  const adminDb = getDb();
+  const customerDoc = await adminDb.collection("customers").doc(customerId).get();
+  
+  if (!customerDoc.exists) return;
+
+  const customerData = customerDoc.data();
+  const fcmToken = customerData?.fcmToken;
+
+  if (fcmToken) {
+    const payload = {
+      notification: {
+        title: "تحديث في الرصيد / الباقات",
+        body: data.description || "تم تسجيل حركة جديدة في حسابك.",
+      },
+    };
+
+    try {
+      await getMessaging().send({
+        token: fcmToken,
+        notification: payload.notification,
+      });
+      console.log(`[FCM] Successfully sent push notification to ${customerId}`);
+    } catch (err) {
+      console.error(`[FCM] Failed to send push notification to ${customerId}`, err);
+    }
+  }
+});
+
+export const onCustomerPackageUpdatedV2 = onDocumentUpdated("customerPackages/{packageId}", async (event) => {
+  const data = event.data?.after.data();
+  if (!data) return;
+
+  const customerId = data.customerId;
+  if (!customerId) return;
+  
+  try {
+    await triggerPushNotification(customerId);
+    console.log(`[Wallet Push] Successfully triggered Apple Wallet push for ${customerId}`);
+  } catch (err) {
+    console.error(`[Wallet Push] Failed to trigger push for ${customerId}`, err);
+  }
+});
+
+export const onEcommerceOrderCreatedV2 = onDocumentCreated("ecommerce_orders/{orderId}", async (event) => {
+  const data = event.data?.data();
+  if (!data) return;
+
+  const orderId = event.params.orderId;
+  const totalAmount = data.totalAmount || 0;
+  const customerId = data.customerId || "";
+
+  const adminDb = getDb();
+  let customerName = data.customerName;
+
+  if (!customerName && customerId) {
+    try {
+      const custDoc = await adminDb.collection("customers").doc(customerId).get();
+      if (custDoc.exists) {
+        customerName = custDoc.data()?.name || customerId;
+      } else {
+        customerName = customerId || "عميل غير معروف";
+      }
+    } catch (e) {
+      customerName = "عميل غير معروف";
+    }
+  } else if (!customerName) {
+    customerName = "عميل غير معروف";
+  }
+  
+  // Find admin user
+  const adminsSnap = await adminDb.collection("customers")
+    .where("email", "==", "admin@hayat.beauty")
+    .limit(1)
+    .get();
+
+  if (adminsSnap.empty) {
+    console.log("[Ecommerce Push] No admin found to notify.");
+    return;
+  }
+
+  const adminData = adminsSnap.docs[0].data();
+  const adminToken = adminData?.expoPushToken || adminData?.fcmToken;
+
+  if (adminToken) {
+    const payload = {
+      notification: {
+        title: "طلب جديد في المتجر! 📦",
+        body: `قام ${customerName} بطلب جديد بقيمة ${totalAmount}.`,
+      },
+      data: {
+        type: "NEW_ORDER",
+        orderId: orderId
+      }
+    };
+
+    try {
+      if (adminToken.includes('ExponentPushToken')) {
+        // Expo Push Notification (using fetch to Expo API since it's an Expo token)
+        await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: adminToken,
+            title: payload.notification.title,
+            body: payload.notification.body,
+            data: payload.data,
+          }),
+        });
+      } else {
+        // FCM Native token
+        await getMessaging().send({
+          token: adminToken,
+          notification: payload.notification,
+          data: payload.data
+        });
+      }
+      console.log(`[Ecommerce Push] Successfully notified admin for order ${orderId}`);
+    } catch (err) {
+      console.error(`[Ecommerce Push] Failed to notify admin`, err);
+    }
+  }
+});

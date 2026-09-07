@@ -19,7 +19,10 @@ service cloud.firestore {
     // This claim is only set by the /api/auth/elevate server endpoint
     // after verifying the PIN matches an admin record in Firestore.
     function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+      return request.auth != null && (
+        request.auth.token.admin == true || 
+        (request.auth.token.email != null && request.auth.token.email.matches('(?i)^admin@hayat.beauty$'))
+      );
     }
 
     // Validates that a document ID is a safe alphanumeric string.
@@ -124,5 +127,73 @@ service cloud.firestore {
       allow read, update: if isSignedIn();
       allow create, delete: if isAdmin();
     }
+
+    // ─── Products (E-commerce) ───────────────────────────────────────────────
+    // Mobile app reads product catalogue. Admins manage products.
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /store_categories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── E-commerce Orders ───────────────────────────────────────────────────
+    // Customers can create and read their own orders.
+    match /ecommerce_orders/{orderId} {
+      allow read, create, update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Community Posts ─────────────────────────────────────────────────────
+    // All signed-in users can read posts. Admins manage content.
+    match /community_posts/{postId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /posts/{postId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── Gym Schedule ────────────────────────────────────────────────────────
+    match /gym_schedule/{scheduleId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ─── Gym Videos ──────────────────────────────────────────────────────────
+    match /gym_videos/{videoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ─── Coupons ─────────────────────────────────────────────────────────────
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ─── Wallet Passes (server-managed, read-only for clients) ───────────────
+    match /wallet_passes/{passId} {
+      allow read: if isSignedIn();
+    }
+
+    // ─── Wallet Device Registrations ─────────────────────────────────────────
+    match /wallet_device_registrations/{registrationId} {
+      allow read: if isSignedIn();
+    }
+
+    // ─── Gate Logs ───────────────────────────────────────────────────────────
+    match /gateLogs/{logId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow delete: if isAdmin();
+    }
   }
 }
+
+

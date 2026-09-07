@@ -1,4 +1,4 @@
-import { getApps, initializeApp as initAdminApp, cert } from "firebase-admin/app";
+import { getApps, initializeApp as initAdminApp, cert, applicationDefault } from "firebase-admin/app";
 import { getFirestore as getAdminFirestore } from "firebase-admin/firestore";
 import { getAuth as getAdminAuth } from "firebase-admin/auth";
 
@@ -25,22 +25,34 @@ export const ensureAdminInitialized = () => {
   if (getApps().length > 0) return;
 
   try {
-    const explicitProjectId = resolveProjectIdFromEnv();
-    if (process.env.ADMIN_SERVICE_ACCOUNT) {
-      const serviceAccount = JSON.parse(process.env.ADMIN_SERVICE_ACCOUNT);
-      initAdminApp({
-        credential: cert(serviceAccount),
-        projectId: explicitProjectId || serviceAccount.project_id,
-      });
-      return;
+    const explicitProjectId = resolveProjectIdFromEnv() || "gen-lang-client-0746151360";
+
+    // In Google Cloud Functions / Cloud Run, always use built-in Google Application Default Credentials
+    const isCloudEnvironment = Boolean(
+      process.env.FUNCTION_NAME ||
+      process.env.FUNCTION_TARGET ||
+      process.env.K_SERVICE ||
+      process.env.FIREBASE_CONFIG ||
+      process.env.GCP_PROJECT
+    );
+
+    if (!isCloudEnvironment && process.env.ADMIN_SERVICE_ACCOUNT) {
+      try {
+        const serviceAccount = JSON.parse(process.env.ADMIN_SERVICE_ACCOUNT);
+        initAdminApp({
+          credential: cert(serviceAccount),
+          projectId: explicitProjectId || serviceAccount.project_id,
+        });
+        return;
+      } catch (saErr) {
+        console.warn("Could not load ADMIN_SERVICE_ACCOUNT, falling back to default credentials:", saErr);
+      }
     }
 
-    if (explicitProjectId) {
-      initAdminApp({ projectId: explicitProjectId });
-      return;
-    }
-
-    initAdminApp();
+    // Default initialization (ADC in Cloud Functions)
+    initAdminApp({
+      projectId: explicitProjectId,
+    });
   } catch (e) {
     console.warn("Firebase Admin App initialization error:", e);
   }

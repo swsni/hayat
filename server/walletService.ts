@@ -259,9 +259,9 @@ export const handleWalletPass = async (req: any, res: any) => {
         
         if (passDoc.exists && passDoc.data()?.authenticationToken) {
           const existingToken = passDoc.data()!.authenticationToken;
+          // تم إزالة تحديث الوقت (updatedAt) من هنا لإنقاذ البطاقة من اللوب اللانهائي في آبل
           transaction.set(passRef, {
-            customerId: customerId,
-            updatedAt: new Date().toISOString()
+            customerId: customerId
           }, { merge: true });
           return existingToken;
         }
@@ -270,7 +270,7 @@ export const handleWalletPass = async (req: any, res: any) => {
         transaction.set(passRef, {
           authenticationToken: newToken,
           customerId: customerId,
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString() // يُسجل فقط عند تصنيع البطاقة لأول مرة
         }, { merge: true });
         return newToken;
       });

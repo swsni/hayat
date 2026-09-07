@@ -25,7 +25,7 @@ export interface Customer {
   blockedAt?: string;
   blockedBy?: string;
   blockedReason?: string;
-  gymAccess?: 'member' | 'staff' | 'family';
+  role?: 'member' | 'staff' | 'family';
 }
 
 export interface CustomerPackage {
@@ -67,14 +67,16 @@ export interface Invoice {
   originalInvoiceId?: string;
 }
 
-export type AuditActionType = 'Purchase' | 'Deduct' | 'Undo' | 'Bonus Provision' | 'Profile Update' | 'Refund' | 'Manual Top-Up' | 'Block Customer' | 'Unblock Customer' | 'Freeze Subscription' | 'Unfreeze Subscription';
+export type AuditActionType = 'Purchase' | 'Deduct' | 'Undo' | 'Bonus Provision' | 'Profile Update' | 'Refund' | 'Manual Top-Up' | 'Block Customer' | 'Unblock Customer' | 'Freeze Subscription' | 'Unfreeze Subscription' | string;
 
 export interface AuditLog {
   id?: string;
   customerId: string;
+  customerName?: string;
   action: AuditActionType;
-  description: string;
-  timestamp: string;
+  description?: string;
+  details?: string;
+  timestamp: any;
   staffName: string;
   staffId?: string;
   branch: string;

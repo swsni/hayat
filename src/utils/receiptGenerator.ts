@@ -21,7 +21,7 @@ export async function generateReceiptPdf(
   // Load Arabic‑supporting font
   let font: any;
   try {
-    const fontUrl = 'https://fonts.gstatic.com/s/cairo/v28/SLXgc1nY6HkvalIkTp2mxdt0UX8.woff2';
+    const fontUrl = 'https://themes.googleusercontent.com/static/fonts/earlyaccess/droidarabickufi/v3/DroidKufi-Regular.ttf';
     const res = await fetch(fontUrl);
     if (!res.ok) throw new Error('Font fetch failed');
     const fontBytes = await res.arrayBuffer();

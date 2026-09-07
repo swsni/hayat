@@ -17,7 +17,7 @@ export default function ReceiptPreviewModal({ order, language, onClose }: Props)
   };
 
   return (
-    <div className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm no-print" dir={dir}>
+    <div className="fixed inset-0 z-70 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm no-print" dir={dir}>
       {/* Receipt Container */}
       <div className="bg-white w-full max-w-sm rounded-xl shadow-2xl overflow-hidden flex flex-col receipt-preview-container">
         
